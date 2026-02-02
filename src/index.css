@@ -5,27 +5,47 @@
 
   --color-primary: #6A0DAD;
   --color-primary-hover: #580099;
-  --color-primary-light: #8A2BE2; /* For lighter primary accents */
-  
+  --color-primary-light: #8A2BE2;
+  /* For lighter primary accents */
+
   --color-secondary: #C6B7E2;
   --color-secondary-dark: #9F8CC0;
-  
+
   --color-accent: #D63384;
   --color-accent-pink: #FF66CC;
   --color-accent-violet: #9D4EDD;
-  
-  --color-background-light: #F3E8FF; /* Light lavender */
-  --color-background-white: #FAF5FF; /* Off-white / very light lavender */
+
+  --color-background-light: #F3E8FF;
+  /* Light lavender */
+  --color-background-white: #FAF5FF;
+  /* Off-white / very light lavender */
   --color-background-glass: rgba(255, 255, 255, 0.7);
-  
+
   --color-text-primary: #2E1A47;
   --color-text-secondary: #6B5B95;
   --color-text-muted: #9CA3AF;
+
+  --animate-sway-slow: sway 8s ease-in-out infinite alternate;
+  --animate-sway-medium: sway 6s ease-in-out infinite alternate;
+  --animate-sway-fast: sway 5s ease-in-out infinite alternate;
+}
+
+@keyframes sway {
+  0% {
+    transform: rotate(3deg) translateX(2px);
+  }
+
+  100% {
+    transform: rotate(-3deg) translateX(-2px);
+  }
 }
 
 /* Custom base styles */
 body {
-  background-color: var(--color-background-white);
+  /* Rich Lavender Theme Background */
+  background: linear-gradient(135deg, #f3e8ff 0%, #e0c3fc 50%, #d8b4fe 100%);
+  background-attachment: fixed;
+  /* Ensures gradient stays while scrolling */
   color: var(--color-text-primary);
   font-family: var(--font-sans);
   margin: 0;
