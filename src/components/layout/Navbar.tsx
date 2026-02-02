@@ -64,7 +64,7 @@ export function Navbar() {
                         <Link to="/login">
                             <Button variant="ghost" size="sm">Log In</Button>
                         </Link>
-                        <Link to="/register-student">
+                        <Link to="/register">
                             <Button>
                                 Get Started
                                 <ChevronRight className="w-4 h-4 ml-1" />
@@ -99,7 +99,7 @@ export function Navbar() {
                         <Link to="/login" onClick={() => setIsOpen(false)}>
                             <Button variant="outline" className="w-full justify-center">Log In</Button>
                         </Link>
-                        <Link to="/register-student" onClick={() => setIsOpen(false)}>
+                        <Link to="/register" onClick={() => setIsOpen(false)}>
                             <Button className="w-full justify-center">Get Started</Button>
                         </Link>
                     </div>

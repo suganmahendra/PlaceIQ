@@ -4,8 +4,12 @@ import { DashboardLayout } from './layouts/DashboardLayout';
 import { LandingPage } from './pages/public/LandingPage';
 import { StudentRegister } from './pages/auth/StudentRegister';
 import { StudentLogin } from './pages/auth/StudentLogin';
+import { RegisterSelection } from './pages/auth/RegisterSelection';
 import { MentorRegister } from './pages/auth/MentorRegister';
 import { DashboardHome } from './pages/student/DashboardHome';
+import { AboutPage } from './pages/public/AboutPage';
+import { LearningPage } from './pages/public/LearningPage';
+import { ContactPage } from './pages/public/ContactPage';
 
 function App() {
   return (
@@ -13,14 +17,15 @@ function App() {
       <Routes>
         <Route element={<PublicLayout />}>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/register" element={<RegisterSelection />} />
           <Route path="/register-student" element={<StudentRegister />} />
           <Route path="/login" element={<StudentLogin />} />
           <Route path="/register-mentor" element={<MentorRegister />} />
 
-          <Route path="/about" element={<div className="container mx-auto py-20 px-4">About Page (Coming Soon)</div>} />
+          <Route path="/about" element={<AboutPage />} />
           <Route path="/features" element={<div className="container mx-auto py-20 px-4">Features Page (Coming Soon)</div>} />
-          <Route path="/learning-preview" element={<div className="container mx-auto py-20 px-4">Learning Preview (Coming Soon)</div>} />
-          <Route path="/contact" element={<div className="container mx-auto py-20 px-4">Contact Page (Coming Soon)</div>} />
+          <Route path="/learning-preview" element={<LearningPage />} />
+          <Route path="/contact" element={<ContactPage />} />
         </Route>
 
         {/* Auth Layout for Dashboard */}
