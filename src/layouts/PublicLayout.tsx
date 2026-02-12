@@ -2,6 +2,7 @@
 import { Outlet } from 'react-router-dom';
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
+import { AIChatbot } from '../components/ai/AIChatbot';
 
 export function PublicLayout() {
     return (
@@ -11,6 +12,7 @@ export function PublicLayout() {
                 <Outlet />
             </main>
             <Footer />
+            <AIChatbot />
         </div>
     );
 }

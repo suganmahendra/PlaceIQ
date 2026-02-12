@@ -131,13 +131,25 @@ export function RegisterSelection() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.8 }}
-                className="mt-16 text-center space-y-4"
+                className="mt-16 text-center space-y-6"
             >
-                <p className="text-text-secondary font-medium">
-                    Already have an account? <Link to="/login" className="text-primary font-bold hover:underline underline-offset-4">Log in here</Link>
-                </p>
-                <Link to="/" className="inline-block text-sm text-text-muted hover:text-primary transition-colors">
-                    ← Back to homepage
+                <div>
+                    <p className="text-text-secondary font-semibold mb-3 tracking-wide text-xs uppercase">Already have an account?</p>
+                    <div className="flex flex-wrap items-center justify-center gap-6">
+                        <Link to="/login" className="flex items-center gap-2 text-primary font-bold hover:underline underline-offset-8 transition-all hover:scale-105">
+                            <UserCheck className="w-4 h-4" />
+                            Student Login
+                        </Link>
+                        <div className="w-px h-4 bg-gray-200 hidden sm:block"></div>
+                        <Link to="/login-mentor" className="flex items-center gap-2 text-accent-violet font-bold hover:underline underline-offset-8 transition-all hover:scale-105">
+                            <Briefcase className="w-4 h-4" />
+                            Mentor Login
+                        </Link>
+                    </div>
+                </div>
+
+                <Link to="/" className="inline-block text-xs text-text-muted font-bold hover:text-primary transition-all uppercase tracking-widest mt-4">
+                    ← Back to Experience
                 </Link>
             </motion.div>
         </div>

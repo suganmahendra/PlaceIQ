@@ -1,7 +1,31 @@
-import { Award, Zap, BookOpen, Target, ChevronRight, PlayCircle, Clock, CheckCircle2, TrendingUp } from 'lucide-react';
+import { Award, Zap, BookOpen, Target, ChevronRight, PlayCircle, Clock, CheckCircle2, TrendingUp, type LucideIcon } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { useAuth } from '../../contexts/AuthContext';
+import type { Database } from '../../types/database.types';
+
+type StudentProfile = Database['public']['Tables']['students']['Row'];
 
 export function DashboardHome() {
+    const { profile, loading } = useAuth();
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+        );
+    }
+
+    const firstName = profile?.full_name?.split(' ')[0] || 'Scholar';
+
+    // Type-safe property access
+    const isStudent = profile && 'xp' in profile;
+    const studentProfile = isStudent ? (profile as StudentProfile) : null;
+
+    const level = studentProfile?.level || 'N/A';
+    const xp = studentProfile?.xp || 0;
+    const profileCompletion = studentProfile?.profile_completion || 0;
+
     return (
         <div className="space-y-8">
             {/* Welcome Banner */}
@@ -12,9 +36,9 @@ export function DashboardHome() {
                 <div className="relative z-10">
                     <div className="flex flex-col md:flex-row justify-between md:items-end gap-6">
                         <div>
-                            <h1 className="text-3xl md:text-4xl font-bold mb-3">Welcome back, John! 👋</h1>
+                            <h1 className="text-3xl md:text-4xl font-bold mb-3">Welcome back, {firstName}! 👋</h1>
                             <p className="text-white/90 text-lg max-w-xl leading-relaxed">
-                                You've completed 75% of your weekly goal. Keep up the momentum to reach "Intermediate" level in Data Structures!
+                                You're currently at "{level}" level with {xp} XP. Your profile is {profileCompletion}% complete. Keep up the momentum!
                             </p>
                         </div>
                         <div className="flex gap-4">
@@ -148,7 +172,17 @@ export function DashboardHome() {
 }
 
 // Subcomponents with explicit typing
-const StatCard = ({ icon: Icon, color, bg, label, value, subtext, trend }: any) => (
+interface StatCardProps {
+    icon: LucideIcon;
+    color: string;
+    bg: string;
+    label: string;
+    value: string;
+    subtext: string;
+    trend: 'up' | 'down' | 'neutral';
+}
+
+const StatCard = ({ icon: Icon, color, bg, label, value, subtext, trend }: StatCardProps) => (
     <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow group">
         <div className="flex items-start justify-between mb-4">
             <div className={`p-3 rounded-xl ${bg} ${color} group-hover:scale-110 transition-transform`}>
@@ -164,7 +198,16 @@ const StatCard = ({ icon: Icon, color, bg, label, value, subtext, trend }: any) 
     </div>
 );
 
-const ContentCard = ({ title, category, duration, instructor, progress, image }: any) => (
+interface ContentCardProps {
+    title: string;
+    category: string;
+    duration: string;
+    instructor: string;
+    progress: number;
+    image: string;
+}
+
+const ContentCard = ({ title, category, duration, instructor, progress, image }: ContentCardProps) => (
     <div className="group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
         <div className="relative h-40 overflow-hidden">
             <img src={image} alt={title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
@@ -193,7 +236,15 @@ const ContentCard = ({ title, category, duration, instructor, progress, image }:
     </div>
 );
 
-const JobRow = ({ company, role, match, logo, color }: any) => (
+interface JobRowProps {
+    company: string;
+    role: string;
+    match: number;
+    logo: string;
+    color: string;
+}
+
+const JobRow = ({ company, role, match, logo, color }: JobRowProps) => (
     <div className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer group border border-transparent hover:border-gray-100">
         <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center font-bold text-lg shadow-sm`}>
             {logo}
@@ -212,7 +263,13 @@ const JobRow = ({ company, role, match, logo, color }: any) => (
     </div>
 );
 
-const SkillBar = ({ label, percent, color }: any) => (
+interface SkillBarProps {
+    label: string;
+    percent: number;
+    color: string;
+}
+
+const SkillBar = ({ label, percent, color }: SkillBarProps) => (
     <div>
         <div className="flex justify-between text-xs font-bold text-gray-700 mb-1">
             <span>{label}</span>

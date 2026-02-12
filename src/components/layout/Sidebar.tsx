@@ -11,15 +11,15 @@ import {
     LogOut,
     ChevronLeft,
     ChevronRight,
-    BrainCircuit
+    BrainCircuit,
 } from 'lucide-react';
 
 const sidebarLinks = [
     { name: 'Dashboard', path: '/student/dashboard', icon: LayoutDashboard },
-    { name: 'Learning Paths', path: '/student/learning', icon: BookOpen },
+    { name: 'Learning Path', path: '/student/learning', icon: BookOpen },
     { name: 'Practice & Quiz', path: '/student/quiz', icon: Gamepad2 },
     { name: 'Analytics', path: '/student/analytics', icon: BarChart2 },
-    { name: 'AI Chatbot', path: '/student/ai-chat', icon: MessageSquare }, // Updated path name
+    { name: 'AI Chatbot', path: '/student/ai-chat', icon: MessageSquare },
     { name: 'Placements', path: '/student/placements', icon: Briefcase },
     { name: 'Profile', path: '/student/profile', icon: User },
 ];
