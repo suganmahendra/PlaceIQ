@@ -5,14 +5,14 @@ export function PlacementReadinessSection() {
         <section className="py-20 px-4 bg-gradient-to-b from-purple-50/30 to-white">
             <div className="container mx-auto">
                 <div className="text-center mb-16 space-y-4">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card shadow-md">
-                        <Briefcase className="w-4 h-4 text-purple-600" />
-                        <span className="text-sm font-semibold text-purple-700">Career Success</span>
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card shadow-md border border-violet-100">
+                        <Briefcase className="w-4 h-4 text-violet-600" />
+                        <span className="text-sm font-semibold text-violet-700">Career Success</span>
                     </div>
-                    <h2 className="text-4xl md:text-5xl font-bold text-gray-900">
-                        Your Path to <span className="bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">Placement Success</span>
+                    <h2 className="text-4xl md:text-5xl font-bold text-slate-900 font-[family-name:var(--font-display)]">
+                        Your Path to <span className="bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">Placement Success</span>
                     </h2>
-                    <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                    <p className="text-lg text-slate-600 max-w-2xl mx-auto font-[family-name:var(--font-sans)]">
                         From skill building to job matching, we guide you through every step of your placement journey.
                     </p>
                 </div>
@@ -26,22 +26,22 @@ export function PlacementReadinessSection() {
                                 <Target className="w-8 h-8 text-white" />
                             </div>
                             <div>
-                                <h3 className="text-2xl font-bold text-gray-900 mb-2">Smart Job Matching</h3>
-                                <p className="text-gray-600">AI-powered recommendations based on your skills and interests</p>
+                                <h3 className="text-2xl font-bold text-slate-900 mb-2 font-[family-name:var(--font-display)]">Smart Job Matching</h3>
+                                <p className="text-slate-600">AI-powered recommendations based on your skills and interests</p>
                             </div>
                         </div>
                         <div className="space-y-3">
                             <div className="flex items-center gap-3 text-sm">
                                 <div className="w-2 h-2 rounded-full bg-purple-500" />
-                                <span className="text-gray-700">Personalized company recommendations</span>
+                                <span className="text-slate-700">Personalized company recommendations</span>
                             </div>
                             <div className="flex items-center gap-3 text-sm">
                                 <div className="w-2 h-2 rounded-full bg-violet-500" />
-                                <span className="text-gray-700">Role compatibility scoring</span>
+                                <span className="text-slate-700">Role compatibility scoring</span>
                             </div>
                             <div className="flex items-center gap-3 text-sm">
                                 <div className="w-2 h-2 rounded-full bg-fuchsia-500" />
-                                <span className="text-gray-700">Skill gap analysis</span>
+                                <span className="text-slate-700">Skill gap analysis</span>
                             </div>
                         </div>
                     </div>
@@ -53,22 +53,22 @@ export function PlacementReadinessSection() {
                                 <TrendingUp className="w-8 h-8 text-white" />
                             </div>
                             <div>
-                                <h3 className="text-2xl font-bold text-gray-900 mb-2">Readiness Score</h3>
-                                <p className="text-gray-600">Real-time assessment of your placement preparedness</p>
+                                <h3 className="text-2xl font-bold text-slate-900 mb-2 font-[family-name:var(--font-display)]">Readiness Score</h3>
+                                <p className="text-slate-600">Real-time assessment of your placement preparedness</p>
                             </div>
                         </div>
                         <div className="space-y-3">
                             <div className="flex items-center gap-3 text-sm">
                                 <div className="w-2 h-2 rounded-full bg-violet-500" />
-                                <span className="text-gray-700">Comprehensive skill evaluation</span>
+                                <span className="text-slate-700">Comprehensive skill evaluation</span>
                             </div>
                             <div className="flex items-center gap-3 text-sm">
                                 <div className="w-2 h-2 rounded-full bg-fuchsia-500" />
-                                <span className="text-gray-700">Progress tracking dashboard</span>
+                                <span className="text-slate-700">Progress tracking dashboard</span>
                             </div>
                             <div className="flex items-center gap-3 text-sm">
                                 <div className="w-2 h-2 rounded-full bg-pink-500" />
-                                <span className="text-gray-700">Actionable improvement tips</span>
+                                <span className="text-slate-700">Actionable improvement tips</span>
                             </div>
                         </div>
                     </div>
@@ -80,32 +80,32 @@ export function PlacementReadinessSection() {
                         <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center mx-auto mb-3">
                             <Building2 className="w-6 h-6 text-purple-600" />
                         </div>
-                        <div className="text-3xl font-bold text-gray-900 mb-1">500+</div>
-                        <div className="text-sm text-gray-600 font-medium">Partner Companies</div>
+                        <div className="text-3xl font-bold text-slate-900 mb-1 font-[family-name:var(--font-display)]">500+</div>
+                        <div className="text-sm text-slate-600 font-medium">Partner Companies</div>
                     </div>
 
                     <div className="glass-card rounded-2xl p-6 text-center hover:shadow-lg transition-shadow duration-300">
                         <div className="w-12 h-12 rounded-xl bg-violet-100 flex items-center justify-center mx-auto mb-3">
                             <Users className="w-6 h-6 text-violet-600" />
                         </div>
-                        <div className="text-3xl font-bold text-gray-900 mb-1">10K+</div>
-                        <div className="text-sm text-gray-600 font-medium">Students Placed</div>
+                        <div className="text-3xl font-bold text-slate-900 mb-1 font-[family-name:var(--font-display)]">10K+</div>
+                        <div className="text-sm text-slate-600 font-medium">Students Placed</div>
                     </div>
 
                     <div className="glass-card rounded-2xl p-6 text-center hover:shadow-lg transition-shadow duration-300">
                         <div className="w-12 h-12 rounded-xl bg-fuchsia-100 flex items-center justify-center mx-auto mb-3">
                             <Award className="w-6 h-6 text-fuchsia-600" />
                         </div>
-                        <div className="text-3xl font-bold text-gray-900 mb-1">95%</div>
-                        <div className="text-sm text-gray-600 font-medium">Success Rate</div>
+                        <div className="text-3xl font-bold text-slate-900 mb-1 font-[family-name:var(--font-display)]">95%</div>
+                        <div className="text-sm text-slate-600 font-medium">Success Rate</div>
                     </div>
 
                     <div className="glass-card rounded-2xl p-6 text-center hover:shadow-lg transition-shadow duration-300">
                         <div className="w-12 h-12 rounded-xl bg-pink-100 flex items-center justify-center mx-auto mb-3">
                             <TrendingUp className="w-6 h-6 text-pink-600" />
                         </div>
-                        <div className="text-3xl font-bold text-gray-900 mb-1">₹12L</div>
-                        <div className="text-sm text-gray-600 font-medium">Avg. Package</div>
+                        <div className="text-3xl font-bold text-slate-900 mb-1 font-[family-name:var(--font-display)]">₹12L</div>
+                        <div className="text-sm text-slate-600 font-medium">Avg. Package</div>
                     </div>
                 </div>
             </div>

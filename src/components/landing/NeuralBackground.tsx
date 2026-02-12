@@ -52,9 +52,13 @@ export function NeuralBackground() {
                 if (particle.y < 0 || particle.y > canvas.height) particle.vy *= -1;
 
                 // Draw particle
+                const gradient = ctx.createRadialGradient(particle.x, particle.y, 0, particle.x, particle.y, 3);
+                gradient.addColorStop(0, 'rgba(124, 58, 237, 0.6)'); // Violet-600 center
+                gradient.addColorStop(1, 'rgba(124, 58, 237, 0)');   // Transparent edge
+                ctx.fillStyle = gradient;
+
                 ctx.beginPath();
-                ctx.arc(particle.x, particle.y, 2, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(106, 13, 173, 0.3)';
+                ctx.arc(particle.x, particle.y, 3, 0, Math.PI * 2);
                 ctx.fill();
 
                 // Draw connections
@@ -67,7 +71,8 @@ export function NeuralBackground() {
                         ctx.beginPath();
                         ctx.moveTo(particle.x, particle.y);
                         ctx.lineTo(otherParticle.x, otherParticle.y);
-                        ctx.strokeStyle = `rgba(106, 13, 173, ${0.15 * (1 - distance / 150)})`;
+                        // Violet connection with opacity based on distance
+                        ctx.strokeStyle = `rgba(139, 92, 246, ${0.2 * (1 - distance / 150)})`;
                         ctx.lineWidth = 1;
                         ctx.stroke();
                     }

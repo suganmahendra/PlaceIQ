@@ -4,7 +4,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { PasswordRecoveryModal } from '../../components/auth/PasswordRecoveryModal';
 import { AnimatedBackground } from '../../components/landing/AnimatedBackground';
-import { AIRobot } from '../../components/ai/AIRobot';
+
 import {
     BrainCircuit,
     Mail,
@@ -52,7 +52,7 @@ export function StudentLogin() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-[#FAF5FF] p-4 relative overflow-hidden">
+        <div className="min-h-screen flex items-center justify-center bg-[#FAF5FF] p-4 pt-24 relative overflow-hidden">
             <AnimatedBackground />
 
             {/* Decorative elements */}
@@ -60,18 +60,26 @@ export function StudentLogin() {
             <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-accent-violet/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }} />
 
             <div className="w-full max-w-[900px] flex items-center justify-center gap-12 relative z-10">
-                {/* Welcoming AI Robot (Left Side on Desktop) */}
-                <div className="hidden lg:block w-1/2 animate-float">
-                    <AIRobot mode="active" className="scale-150" />
-                    <div className="mt-20 text-center">
-                        <div className="inline-block px-6 py-3 bg-white/10 backdrop-blur-xl border border-white/20 rounded-[2rem] shadow-2xl">
-                            <p className="text-text-primary font-bold text-lg">"Welcome back, Explorer. Ready to reach your peak?"</p>
+                <div className="hidden lg:flex w-1/2 flex-col items-center justify-center">
+                    {/* Decorative Abstract Design */}
+                    <div className="relative w-80 h-80 animate-float">
+                        <div className="absolute inset-0 bg-gradient-to-tr from-primary to-accent-violet rounded-full opacity-20 blur-3xl" />
+                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-2xl">
+                            <path fill="#8B5CF6" d="M44.7,-76.4C58.9,-69.2,71.8,-59.1,81.6,-46.6C91.4,-34.1,98.1,-19.2,95.8,-5.5C93.5,8.1,82.2,20.6,71.7,31.7C61.2,42.8,51.5,52.4,40.4,60.2C29.3,68,16.8,74,3.1,78.6C-10.6,83.2,-25.5,86.4,-38.7,82.3C-51.9,78.2,-63.4,66.8,-71.4,53.4C-79.4,40,-83.9,24.6,-83.3,9.5C-82.7,-5.6,-77,-20.4,-68.3,-33.5C-59.6,-46.6,-47.9,-58,-35.1,-65.9C-22.3,-73.8,-8.4,-78.2,3.8,-84.1C16,-90,30.5,-97.4,44.7,-76.4Z" transform="translate(100 100)" />
+                            <path fill="#6D28D9" fillOpacity="0.5" d="M38.1,-65.4C49.5,-59.5,59.1,-49.2,66.9,-37.6C74.7,-26,80.6,-13,79.8,-0.5C78.9,12,71.3,23.9,62.8,34.8C54.3,45.7,44.9,55.6,33.8,61.9C22.7,68.2,9.9,70.9,-2.2,74.7C-14.3,78.5,-25.7,83.4,-36.1,80.1C-46.5,76.8,-55.9,65.3,-62.8,53.2C-69.7,41.1,-74.1,28.4,-74.9,15.5C-75.7,2.6,-72.9,-10.5,-66.2,-21.8C-59.5,-33.1,-48.9,-42.6,-37.9,-48.8C-26.9,-55,-15.5,-57.9,-2.4,-53.8C10.7,-49.7,32,-56,38.1,-65.4Z" transform="translate(100 100) scale(0.8)" />
+                        </svg>
+                        <BrainCircuit className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 text-white drop-shadow-md" />
+                    </div>
+
+                    <div className="mt-8 text-center relative z-10">
+                        <div className="inline-block px-8 py-4 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-xl">
+                            <p className="text-text-primary font-bold text-xl tracking-tight">"Ready to reach your peak?"</p>
                         </div>
                     </div>
                 </div>
 
-                <div className="w-full max-w-[440px]">
-                    <div className="glass-card rounded-[32px] shadow-2xl p-8 md:p-10 border border-white/50 backdrop-blur-2xl">
+                <div className="w-full max-w-[550px] flex-shrink-0">
+                    <div className="glass-card rounded-[32px] shadow-2xl p-8 border border-white/50 backdrop-blur-2xl">
 
                         <div className="text-center mb-10">
                             <Link to="/" className="inline-flex items-center gap-3 mb-6 group">

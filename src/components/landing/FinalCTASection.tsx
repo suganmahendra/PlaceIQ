@@ -6,7 +6,7 @@ export function FinalCTASection() {
     return (
         <section className="py-20 px-4 relative overflow-hidden">
             {/* Background decoration */}
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-violet-600 to-fuchsia-600 opacity-95" />
+            <div className="absolute inset-0 bg-gradient-to-br from-violet-700 via-indigo-700 to-fuchsia-700 opacity-95" />
             <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl" />
             <div className="absolute bottom-0 left-0 w-96 h-96 bg-black/10 rounded-full blur-3xl" />
 

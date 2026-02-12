@@ -66,26 +66,26 @@ export function AIRobot({ className, mode = 'active' }: AIRobotProps) {
                 className="relative z-10 cursor-pointer"
             >
                 {/* Robot Head */}
-                <div className="relative w-24 h-24 md:w-32 md:h-32">
+                <div className="relative w-full h-full">
                     {/* Glass outer shell */}
-                    <div className="absolute inset-0 rounded-[2.5rem] bg-white/10 backdrop-blur-md border border-white/30 shadow-[0_0_20px_rgba(168,85,247,0.2)] group-hover:shadow-[0_0_30px_rgba(168,85,247,0.4)] transition-shadow duration-500" />
+                    <div className="absolute inset-0 rounded-[30%] bg-white/10 backdrop-blur-md border border-white/30 shadow-[0_0_20px_rgba(168,85,247,0.2)] group-hover:shadow-[0_0_30px_rgba(168,85,247,0.4)] transition-shadow duration-500" />
 
                     {/* Inner metal structure */}
-                    <div className="absolute inset-[10%] rounded-[2rem] bg-gradient-to-br from-[#1A1A1A] to-[#333] shadow-inner flex items-center justify-center overflow-hidden">
+                    <div className="absolute inset-[10%] rounded-[25%] bg-gradient-to-br from-[#1A1A1A] to-[#333] shadow-inner flex items-center justify-center overflow-hidden">
                         {/* Glow Effect */}
                         <div className={`absolute inset-0 bg-primary/10 rounded-full blur-xl transition-opacity duration-1000 ${currentMode === 'minimal' ? 'opacity-20' : 'opacity-100 animate-pulse'}`} />
 
                         {/* Eyes Container */}
-                        <div className="flex gap-6 relative z-10 translate-y-[-5%]">
+                        <div className="flex justify-center gap-[20%] w-full relative z-10 translate-y-[-5%]">
                             {/* Eye Left */}
                             <motion.div
                                 style={{
                                     x: useTransform(springX, (v) => v * 0.2),
                                     y: useTransform(springY, (v) => v * 0.2)
                                 }}
-                                className={`w-3 h-3 md:w-4 md:h-4 rounded-full bg-[#E0AAFF] shadow-[0_0_10px_#E0AAFF] relative flex items-center justify-center`}
+                                className={`w-[12%] aspect-square rounded-full bg-[#E0AAFF] shadow-[0_0_10px_#E0AAFF] relative flex items-center justify-center`}
                             >
-                                <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-white blur-[1px]" />
+                                <div className="w-[50%] h-[50%] rounded-full bg-white blur-[1px]" />
                             </motion.div>
 
                             {/* Eye Right */}
@@ -94,40 +94,25 @@ export function AIRobot({ className, mode = 'active' }: AIRobotProps) {
                                     x: useTransform(springX, (v) => v * 0.2),
                                     y: useTransform(springY, (v) => v * 0.2)
                                 }}
-                                className={`w-3 h-3 md:w-4 md:h-4 rounded-full bg-[#E0AAFF] shadow-[0_0_10px_#E0AAFF] relative flex items-center justify-center`}
+                                className={`w-[12%] aspect-square rounded-full bg-[#E0AAFF] shadow-[0_0_10px_#E0AAFF] relative flex items-center justify-center`}
                             >
-                                <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-white blur-[1px]" />
+                                <div className="w-[50%] h-[50%] rounded-full bg-white blur-[1px]" />
                             </motion.div>
                         </div>
 
                         {/* Subtle Mouth Line */}
-                        <div className="absolute bottom-[25%] w-8 h-[2px] bg-white/20 rounded-full" />
+                        <div className="absolute bottom-[25%] w-[30%] h-[2px] bg-white/20 rounded-full" />
                     </div>
 
                     {/* Antenna / Sensor */}
                     <motion.div
                         animate={{ opacity: [0.4, 1, 0.4] }}
                         transition={{ duration: 2, repeat: Infinity }}
-                        className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-primary rounded-full blur-[6px]"
+                        className="absolute -top-[5%] left-1/2 -translate-x-1/2 w-[10%] aspect-square bg-primary rounded-full blur-[2px]"
                     />
                 </div>
 
-                {/* Hover Glow Base */}
-                <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-[60%] h-4 bg-primary/20 blur-xl rounded-full scale-x-150 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             </motion.div>
-
-            {/* Context Tooltip (Passive Mode) */}
-            {currentMode !== 'minimal' && (
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    whileHover={{ opacity: 1, scale: 1 }}
-                    className="absolute -top-16 left-0 right-0 text-center pointer-events-none"
-                >
-                    <div className="inline-block px-4 py-2 bg-text-primary text-white text-xs font-bold rounded-2xl shadow-xl glass-card border-white/10">
-                        PlaceIQ AI Assistant
-                    </div>
-                </motion.div>
-            )}
         </div>
     );
 }

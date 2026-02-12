@@ -81,15 +81,15 @@ export function StudentRegister() {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-[#FAF5FF] p-4 relative overflow-hidden">
+        <div className="min-h-screen flex items-center justify-center bg-[#FAF5FF] p-4 pt-24 relative overflow-hidden">
             <AnimatedBackground />
 
             {/* Animated Blobs for "Futuristic" feel */}
             <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px] animate-pulse" />
             <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-accent-violet/10 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
 
-            <div className="w-full max-w-[480px] relative z-10">
-                <div className="glass-card rounded-[32px] shadow-2xl p-8 md:p-10 border border-white/50 backdrop-blur-2xl">
+            <div className="w-full max-w-[600px] relative z-10 w-full">
+                <div className="glass-card rounded-[32px] shadow-2xl p-6 border border-white/50 backdrop-blur-2xl">
 
                     {/* Header */}
                     <div className="text-center mb-10">

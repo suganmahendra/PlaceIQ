@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import { X, Send, Sparkles } from 'lucide-react';
-import { AIRobot } from './AIRobot';
+import { aiService } from '../../services/aiService';
 
 export function AIChatbot() {
     const [isOpen, setIsOpen] = useState(false);
@@ -38,54 +38,89 @@ export function AIChatbot() {
 
     const context = getContextInfo();
 
-    const handleActionClick = (action: string) => {
-        setMessages(prev => [...prev, { text: action, sender: 'user' }]);
+    const [inputValue, setInputValue] = useState("");
+
+    const handleSend = async (text: string) => {
+        if (!text.trim()) return;
+
+        const userMsg = { text, sender: 'user' as const };
+        setMessages(prev => [...prev, userMsg]);
+        setInputValue("");
         setIsTyping(true);
 
-        // Simulate AI response
-        setTimeout(() => {
-            setIsTyping(false);
-            let aiResponse = "";
-            if (action.includes("level")) aiResponse = "Your current AI readiness level is 'Intermediate'. You need 200 more points to reach 'Advanced'!";
-            else if (action.includes("topic")) aiResponse = "Based on your progress, I recommend starting 'Neural Networks Simplified' in the ML module.";
-            else aiResponse = "That's a great question! Let me pull up the relevant section for you.";
+        try {
+            // Convert messages for API history
+            const history: { role: "user" | "model"; parts: { text: string }[] }[] = messages.map(m => ({
+                role: m.sender === 'user' ? 'user' : 'model',
+                parts: [{ text: m.text }]
+            }));
 
-            setMessages(prev => [...prev, { text: aiResponse, sender: 'ai' }]);
-        }, 1500);
+            const response = await aiService.sendMessage(text, history);
+            setMessages(prev => [...prev, { text: response, sender: 'ai' }]);
+        } catch (error) {
+            console.error(error);
+            setMessages(prev => [...prev, { text: "I'm having trouble connecting. Please check your API key.", sender: 'ai' }]);
+        } finally {
+            setIsTyping(false);
+        }
+    };
+
+    const handleActionClick = (action: string) => {
+        handleSend(action);
     };
 
     return (
         <div className="fixed bottom-6 right-6 z-[100]">
-            {/* Chat Icon & Trigger */}
-            <AnimatePresence>
-                {!isOpen && (
-                    <motion.div
-                        initial={{ scale: 0, rotate: -20 }}
-                        animate={{ scale: 1, rotate: 0 }}
-                        exit={{ scale: 0, rotate: 20 }}
-                        whileHover={{ scale: 1.1 }}
-                        className="relative group cursor-pointer"
-                        onClick={() => setIsOpen(true)}
-                    >
-                        <div className="absolute -inset-2 bg-gradient-to-tr from-primary to-accent-violet rounded-full blur-xl opacity-40 group-hover:opacity-100 transition-opacity animate-pulse" />
-                        <div className="relative glass-card p-2 rounded-3xl border-white/50 shadow-2xl overflow-hidden active:scale-95 transition-transform">
-                            <AIRobot className="w-16 h-16 md:w-20 md:h-20" mode="active" />
-                        </div>
+            {/* Chat Trigger Button - Always Visible */}
+            <motion.button
+                layout
+                onClick={() => setIsOpen(!isOpen)}
+                className="relative group cursor-pointer outline-none"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+            >
+                {/* Glow Effect */}
+                <div className={`absolute -inset-4 bg-violet-500/40 rounded-full blur-xl transition-opacity duration-500 ${isOpen ? 'opacity-0' : 'opacity-100 animate-pulse'}`} />
 
-                        {/* Notification Badge */}
-                        <div className="absolute top-0 right-0 w-5 h-5 bg-accent-pink border-2 border-white rounded-full animate-bounce" />
-                    </motion.div>
+                <div className={`
+                    relative flex items-center justify-center 
+                    w-14 h-14 md:w-16 md:h-16 
+                    rounded-full border border-white/10 shadow-2xl backdrop-blur-xl 
+                    transition-all duration-500
+                    ${isOpen ? 'bg-slate-900 border-slate-700 rotate-90' : 'bg-slate-900 border-indigo-500/30 rotate-0'}
+                `}>
+                    {isOpen ? (
+                        <X className="w-6 h-6 text-white" />
+                    ) : (
+                        // Custom Cute Robot Face Icon
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-white relative z-10">
+                            <rect x="2" y="3" width="20" height="18" rx="5" className="fill-indigo-500/20 stroke-white/80" strokeWidth="2" />
+                            <path d="M7 10C7 10 7.5 10 9 10C10.5 10 11 10 11 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                            <path d="M13 10C13 10 13.5 10 15 10C16.5 10 17 10 17 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                            <path d="M8 15C8 15 10 17 12 17C14 17 16 15 16 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                            <circle cx="12" cy="2" r="1.5" className="fill-white" />
+                        </svg>
+                    )}
+                </div>
+
+                {/* Notification Badge - Only show when closed */}
+                {!isOpen && (
+                    <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-4 w-4 bg-rose-500 border-2 border-white"></span>
+                    </span>
                 )}
-            </AnimatePresence>
+            </motion.button>
 
             {/* Chat Window */}
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
-                        initial={{ opacity: 0, y: 100, scale: 0.9, transformOrigin: 'bottom right' }}
+                        initial={{ opacity: 0, y: 20, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 100, scale: 0.9 }}
-                        className="w-[350px] md:w-[400px] h-[550px] glass-card rounded-[32px] border-white/40 shadow-[0_32px_64px_-16px_rgba(106,13,173,0.3)] flex flex-col overflow-hidden backdrop-blur-3xl"
+                        exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                        transition={{ duration: 0.2 }}
+                        className="absolute bottom-20 right-0 w-[350px] md:w-[380px] h-[500px] bg-white/90 backdrop-blur-2xl border border-white/40 shadow-2xl rounded-[2rem] flex flex-col overflow-hidden"
                     >
                         {/* Header */}
                         <div className="p-6 pb-4 bg-gradient-to-br from-primary/10 via-white/5 to-transparent border-b border-white/20 flex items-center justify-between">
@@ -103,9 +138,9 @@ export function AIChatbot() {
                             </div>
                             <button
                                 onClick={() => setIsOpen(false)}
-                                className="p-2 hover:bg-white/50 rounded-xl transition-colors text-text-muted hover:text-text-primary"
+                                className="p-2 hover:bg-slate-100 rounded-xl transition-colors text-slate-400 hover:text-slate-600"
                             >
-                                <X className="w-5 h-5" />
+                                <X className="w-4 h-4" />
                             </button>
                         </div>
 
@@ -165,15 +200,21 @@ export function AIChatbot() {
                             <div className="relative">
                                 <input
                                     type="text"
+                                    value={inputValue}
+                                    onChange={(e) => setInputValue(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSend(inputValue)}
                                     placeholder="Type your message..."
                                     className="w-full bg-white/40 border border-white/60 rounded-2xl px-5 py-4 pr-14 text-sm focus:outline-none focus:bg-white focus:border-primary transition-all ring-0 shadow-inner placeholder:text-text-muted/50"
                                 />
-                                <button className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-text-primary hover:bg-black text-white rounded-xl transition-all shadow-lg">
+                                <button
+                                    onClick={() => handleSend(inputValue)}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-text-primary hover:bg-black text-white rounded-xl transition-all shadow-lg"
+                                >
                                     <Send className="w-5 h-5" />
                                 </button>
                             </div>
-                            <p className="text-center text-[9px] font-bold text-text-muted uppercase tracking-[0.2em] mt-4 opacity-50 italic">
-                                PlaceIQ AI Core v4.2 // Advanced Real-time Learning
+                            <p className="text-center text-[10px] font-medium text-slate-400 mt-3">
+                                Powered by PlaceIQ Neural Engine
                             </p>
                         </div>
                     </motion.div>

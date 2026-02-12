@@ -18,12 +18,14 @@ const initialMessages: Message[] = [
     },
 ];
 
+import { aiService } from '../../services/aiService';
+
 export function AIChatbotPage() {
     const [messages, setMessages] = useState<Message[]>(initialMessages);
     const [input, setInput] = useState('');
     const [isTyping, setIsTyping] = useState(false);
 
-    const handleSend = () => {
+    const handleSend = async () => {
         if (!input.trim()) return;
 
         // Add user message
@@ -38,17 +40,34 @@ export function AIChatbotPage() {
         setInput('');
         setIsTyping(true);
 
-        // Simulate AI response
-        setTimeout(() => {
+        try {
+            // Prepare history for context
+            const history: { role: "user" | "model"; parts: { text: string }[] }[] = messages.map(msg => ({
+                role: msg.role === 'user' ? 'user' : 'model',
+                parts: [{ text: msg.content }]
+            }));
+
+            const responseText = await aiService.sendMessage(input, history);
+
             const aiMessage: Message = {
                 id: (Date.now() + 1).toString(),
                 role: 'assistant',
-                content: "I'm a UI-only chatbot for demo purposes. In the full implementation, I would be connected to an AI backend to provide intelligent responses to your questions about AI, Data Science, coding, and placement preparation!",
+                content: responseText,
                 timestamp: new Date(),
             };
             setMessages((prev) => [...prev, aiMessage]);
+        } catch (error) {
+            console.error('AI Error:', error);
+            const errorMessage: Message = {
+                id: (Date.now() + 1).toString(),
+                role: 'assistant',
+                content: "I'm having trouble connecting to my brain right now. Please check your API key or try again later.",
+                timestamp: new Date(),
+            };
+            setMessages((prev) => [...prev, errorMessage]);
+        } finally {
             setIsTyping(false);
-        }, 1500);
+        }
     };
 
     const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -62,14 +81,14 @@ export function AIChatbotPage() {
         <div className="h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 flex items-center justify-center p-8">
             <div className="w-full max-w-4xl h-[calc(100vh-4rem)] bg-white rounded-2xl border border-gray-200 shadow-xl flex flex-col overflow-hidden">
                 {/* Header */}
-                <div className="bg-gradient-to-r from-primary to-accent p-6 text-white">
+                <div className="bg-gradient-to-r from-violet-600 to-indigo-600 p-6 text-white">
                     <div className="flex items-center gap-3">
-                        <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl">
+                        <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl border border-white/20">
                             <Sparkles className="w-6 h-6" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold">AI Learning Assistant</h1>
-                            <p className="text-white/90 text-sm">Your 24/7 study companion</p>
+                            <h1 className="text-2xl font-bold font-[family-name:var(--font-display)]">AI Learning Assistant</h1>
+                            <p className="text-white/80 text-sm font-[family-name:var(--font-sans)]">Your 24/7 study companion</p>
                         </div>
                     </div>
                 </div>
