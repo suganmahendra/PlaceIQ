@@ -71,7 +71,7 @@ To allow **ANY** student or mentor to sign in:
 1. Go back to **APIs & Services** -> **OAuth consent screen**.
 2. Under "Publishing status", click the **"PUBLISH APP"** button.
 3. Click **"Confirm"**.
-4. Status will change to **"In production"**.
+4. Status will change git to **"In production"**.
    - **Result:** Now anyone with a Google account can sign in without needing manual approval.
    - *Note:* Google will show a "Google hasn't verified this app" warning. Users can click "Advanced" -> "Go to PlaceIQ (unsafe)" to proceed. This is standard for unverified apps.
 
