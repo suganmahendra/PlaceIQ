@@ -1,0 +1,84 @@
+{
+    "id": "soft-skills-hr",
+    "title": "Soft Skills & HR",
+    "level": "All Levels",
+    "modules": 6,
+    "duration": "2 months",
+    "color": "pink",
+    "icon": "MessageSquare",
+    "description": "Master the art of communication, leadership, and acing the behavioral round.",
+    "phases": [
+        {
+            "title": "Communication Mastery",
+            "duration": "3 weeks",
+            "topics": [
+                {
+                    "name": "Effective Communication",
+                    "description": "Active listening, clarity, feedback",
+                    "completed": false,
+                    "resources": 10
+                },
+                {
+                    "name": "Presentation Skills",
+                    "description": "Public speaking, storytelling",
+                    "completed": false,
+                    "resources": 8
+                },
+                {
+                    "name": "Email Etiquette",
+                    "description": "Professional writing, tone",
+                    "completed": false,
+                    "resources": 6
+                }
+            ]
+        },
+        {
+            "title": "Behavioral Interview Prep",
+            "duration": "3 weeks",
+            "topics": [
+                {
+                    "name": "STAR Method",
+                    "description": "Situation, Task, Action, Result",
+                    "completed": false,
+                    "resources": 12
+                },
+                {
+                    "name": "Common HR Questions",
+                    "description": "Strengths, weaknesses, conflicts",
+                    "completed": false,
+                    "resources": 20
+                },
+                {
+                    "name": "Mock Interviews",
+                    "description": "Practice with real scenarios",
+                    "completed": false,
+                    "resources": 15
+                }
+            ]
+        },
+        {
+            "title": "Leadership & Teamwork",
+            "duration": "2 weeks",
+            "topics": [
+                {
+                    "name": "Team Collaboration",
+                    "description": "Working in agile teams",
+                    "completed": false,
+                    "resources": 8
+                },
+                {
+                    "name": "Conflict Resolution",
+                    "description": "Handling disagreements",
+                    "completed": false,
+                    "resources": 6
+                },
+                {
+                    "name": "Leadership Principles",
+                    "description": "Amazon's 16 principles",
+                    "completed": false,
+                    "resources": 10
+                }
+            ]
+        }
+    ]
+}

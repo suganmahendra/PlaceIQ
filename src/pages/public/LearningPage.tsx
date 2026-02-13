@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
     BookOpen,
@@ -14,42 +15,34 @@ import {
     FileText,
     MessageSquare
 } from 'lucide-react';
+import roadmapsData from '../../data/roadmaps';
+
+const iconMap: Record<string, React.ReactNode> = {
+    Globe: <Globe className="w-6 h-6" />,
+    Code: <Code className="w-6 h-6" />,
+    Cpu: <Cpu className="w-6 h-6" />,
+    MessageSquare: <MessageSquare className="w-6 h-6" />,
+};
+
+const colorMap: Record<string, string> = {
+    blue: 'bg-blue-500/20 text-blue-600',
+    purple: 'bg-purple-500/20 text-purple-600',
+    orange: 'bg-orange-500/20 text-orange-600',
+    pink: 'bg-pink-500/20 text-pink-600',
+};
 
 export const LearningPage: React.FC = () => {
-    const tracks = [
-        {
-            title: 'Full-Stack Mastery',
-            icon: <Globe className="w-6 h-6" />,
-            modules: '12 Modules',
-            level: 'Absolute Beginner',
-            color: 'bg-blue-500/20 text-blue-600',
-            description: 'Master modern web development from HTML/CSS to advanced React and Node.js.'
-        },
-        {
-            title: 'DSA & Algorithms',
-            icon: <Code className="w-6 h-6" />,
-            modules: '18 Modules',
-            level: 'Intermediate',
-            color: 'bg-purple-500/20 text-purple-600',
-            description: 'The backbone of technical interviews. Learn efficiency, complexity, and patterns.'
-        },
-        {
-            title: 'System Design',
-            icon: <Cpu className="w-6 h-6" />,
-            modules: '8 Modules',
-            level: 'Advanced',
-            color: 'bg-orange-500/20 text-orange-600',
-            description: 'Learn how to architect scalable systems for millions of concurrent users.'
-        },
-        {
-            title: 'Soft Skills & HR',
-            icon: <MessageSquare className="w-6 h-6" />,
-            modules: '6 Modules',
-            level: 'All Levels',
-            color: 'bg-pink-500/20 text-pink-600',
-            description: 'Master the art of communication, leadership, and acing the behavioral round.'
-        }
-    ];
+    const navigate = useNavigate();
+
+    const tracks = roadmapsData.map((roadmap) => ({
+        id: roadmap.id,
+        title: roadmap.title,
+        icon: iconMap[roadmap.icon] || <BookOpen className="w-6 h-6" />,
+        modules: `${roadmap.modules} Modules`,
+        level: roadmap.level,
+        color: colorMap[roadmap.color] || 'bg-blue-500/20 text-blue-600',
+        description: roadmap.description
+    }));
 
     const features = [
         {
@@ -121,7 +114,10 @@ export const LearningPage: React.FC = () => {
                                         {track.description}
                                     </p>
                                 </div>
-                                <button className="flex items-center gap-2 text-sm font-bold text-primary group-hover:underline">
+                                <button
+                                    onClick={() => navigate(`/roadmap/${track.id}`)}
+                                    className="flex items-center gap-2 text-sm font-bold text-primary group-hover:underline"
+                                >
                                     View Roadmap <ArrowRight className="w-4 h-4" />
                                 </button>
                             </div>

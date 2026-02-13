@@ -82,14 +82,14 @@ export function MentorRegister() {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-[#FAF5FF] p-4 relative overflow-hidden">
+        <div className="min-h-screen flex items-center justify-center bg-[#FAF5FF] p-4 pt-24 relative overflow-hidden">
             <AnimatedBackground />
 
             <div className="absolute top-[-5%] right-[-5%] w-[30%] h-[30%] bg-primary/5 rounded-full blur-[100px]" />
             <div className="absolute bottom-[-5%] left-[-5%] w-[30%] h-[30%] bg-accent-violet/5 rounded-full blur-[100px]" />
 
-            <div className="w-full max-w-[500px] relative z-10">
-                <div className="glass-card rounded-[40px] shadow-2xl p-8 md:p-12 border border-white/60 backdrop-blur-2xl">
+            <div className="w-full max-w-[600px] relative z-10">
+                <div className="glass-card rounded-[32px] shadow-2xl p-6 border border-white/60 backdrop-blur-2xl">
 
                     {/* Header */}
                     <div className="text-center mb-10">
@@ -99,10 +99,10 @@ export function MentorRegister() {
                                 <Star className="w-3 h-3 fill-current" />
                             </div>
                         </div>
-                        <h2 className="text-4xl font-extrabold text-text-primary tracking-tight mb-3">
+                        <h2 className="text-3xl font-extrabold text-text-primary tracking-tight mb-2">
                             Mentor Onboarding
                         </h2>
-                        <p className="text-text-secondary font-medium">Share your expertise with the next generation of AI leaders</p>
+                        <p className="text-text-secondary font-medium text-sm">Share your expertise with the next generation of AI leaders</p>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-6">
@@ -112,7 +112,7 @@ export function MentorRegister() {
                                 <p className="text-sm font-medium">{error}</p>
                             </div>
                         )}
-                        <div className="space-y-5">
+                        <div className="space-y-4">
                             <Input
                                 label="Full Name"
                                 placeholder="Dr. Sarah Johnson"

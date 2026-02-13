@@ -237,13 +237,13 @@ export const authService = {
             .from('user_security_logs')
             .insert({
                 user_id: userId,
-                event_type: eventType as any,
+                event_type: eventType,
                 ip_address: '127.0.0.1', // In production, this would be captured from edge function
                 device_info: {
                     userAgent: navigator.userAgent,
                     platform: navigator.platform,
                     language: navigator.language,
-                } as any,
+                },
             });
 
         if (error) console.error('Failed to log security event:', error);

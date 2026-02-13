@@ -1,0 +1,108 @@
+{
+    "id": "dsa-algorithms",
+    "title": "DSA & Algorithms",
+    "level": "Intermediate",
+    "modules": 18,
+    "duration": "5 months",
+    "color": "purple",
+    "icon": "Code",
+    "description": "The backbone of technical interviews. Learn efficiency, complexity, and patterns.",
+    "phases": [
+        {
+            "title": "Foundations",
+            "duration": "3 weeks",
+            "topics": [
+                {
+                    "name": "Time & Space Complexity",
+                    "description": "Big O notation, algorithm analysis",
+                    "completed": false,
+                    "resources": 10
+                },
+                {
+                    "name": "Arrays & Strings",
+                    "description": "Two pointers, sliding window",
+                    "completed": false,
+                    "resources": 25
+                },
+                {
+                    "name": "Hashing & Sets",
+                    "description": "Hash maps, frequency counters",
+                    "completed": false,
+                    "resources": 15
+                }
+            ]
+        },
+        {
+            "title": "Linear Data Structures",
+            "duration": "4 weeks",
+            "topics": [
+                {
+                    "name": "Linked Lists",
+                    "description": "Singly, doubly, circular lists",
+                    "completed": false,
+                    "resources": 18
+                },
+                {
+                    "name": "Stacks & Queues",
+                    "description": "Implementation and applications",
+                    "completed": false,
+                    "resources": 16
+                },
+                {
+                    "name": "Recursion",
+                    "description": "Base cases, backtracking",
+                    "completed": false,
+                    "resources": 20
+                }
+            ]
+        },
+        {
+            "title": "Non-Linear Structures",
+            "duration": "5 weeks",
+            "topics": [
+                {
+                    "name": "Trees & Binary Trees",
+                    "description": "Traversals, BST operations",
+                    "completed": false,
+                    "resources": 22
+                },
+                {
+                    "name": "Graphs",
+                    "description": "BFS, DFS, shortest paths",
+                    "completed": false,
+                    "resources": 28
+                },
+                {
+                    "name": "Heaps & Priority Queues",
+                    "description": "Min/max heaps, heap sort",
+                    "completed": false,
+                    "resources": 14
+                }
+            ]
+        },
+        {
+            "title": "Advanced Topics",
+            "duration": "6 weeks",
+            "topics": [
+                {
+                    "name": "Dynamic Programming",
+                    "description": "Memoization, tabulation patterns",
+                    "completed": false,
+                    "resources": 30
+                },
+                {
+                    "name": "Greedy Algorithms",
+                    "description": "Optimization problems",
+                    "completed": false,
+                    "resources": 18
+                },
+                {
+                    "name": "Interview Patterns",
+                    "description": "Top 100 LeetCode problems",
+                    "completed": false,
+                    "resources": 40
+                }
+            ]
+        }
+    ]
+}

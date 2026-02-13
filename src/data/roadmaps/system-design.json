@@ -1,0 +1,108 @@
+{
+    "id": "system-design",
+    "title": "System Design",
+    "level": "Advanced",
+    "modules": 8,
+    "duration": "3 months",
+    "color": "orange",
+    "icon": "Cpu",
+    "description": "Learn how to architect scalable systems for millions of concurrent users.",
+    "phases": [
+        {
+            "title": "Fundamentals",
+            "duration": "3 weeks",
+            "topics": [
+                {
+                    "name": "Scalability Basics",
+                    "description": "Vertical vs Horizontal scaling",
+                    "completed": false,
+                    "resources": 12
+                },
+                {
+                    "name": "Load Balancing",
+                    "description": "Distribution strategies, algorithms",
+                    "completed": false,
+                    "resources": 10
+                },
+                {
+                    "name": "Caching Strategies",
+                    "description": "Redis, CDN, cache invalidation",
+                    "completed": false,
+                    "resources": 14
+                }
+            ]
+        },
+        {
+            "title": "Database Design",
+            "duration": "4 weeks",
+            "topics": [
+                {
+                    "name": "SQL vs NoSQL",
+                    "description": "When to use each, trade-offs",
+                    "completed": false,
+                    "resources": 16
+                },
+                {
+                    "name": "Database Sharding",
+                    "description": "Partitioning, replication",
+                    "completed": false,
+                    "resources": 12
+                },
+                {
+                    "name": "CAP Theorem",
+                    "description": "Consistency, availability, partition",
+                    "completed": false,
+                    "resources": 10
+                }
+            ]
+        },
+        {
+            "title": "Microservices",
+            "duration": "3 weeks",
+            "topics": [
+                {
+                    "name": "Service Architecture",
+                    "description": "Monolith vs Microservices",
+                    "completed": false,
+                    "resources": 14
+                },
+                {
+                    "name": "Message Queues",
+                    "description": "Kafka, RabbitMQ, async processing",
+                    "completed": false,
+                    "resources": 16
+                },
+                {
+                    "name": "API Gateway",
+                    "description": "Rate limiting, authentication",
+                    "completed": false,
+                    "resources": 10
+                }
+            ]
+        },
+        {
+            "title": "Real-World Systems",
+            "duration": "2 weeks",
+            "topics": [
+                {
+                    "name": "Design Twitter",
+                    "description": "News feed, followers, tweets",
+                    "completed": false,
+                    "resources": 8
+                },
+                {
+                    "name": "Design YouTube",
+                    "description": "Video storage, streaming, CDN",
+                    "completed": false,
+                    "resources": 8
+                },
+                {
+                    "name": "Design Uber",
+                    "description": "Location services, matching",
+                    "completed": false,
+                    "resources": 8
+                }
+            ]
+        }
+    ]
+}

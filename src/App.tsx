@@ -26,6 +26,7 @@ import { PlacementsPage } from './pages/student/PlacementsPage';
 import { AIChatbotPage } from './pages/student/AIChatbotPage';
 import { ProfilePage } from './pages/student/ProfilePage';
 import { CourseDetailPage } from './pages/student/CourseDetailPage';
+import { RoadmapPage } from './pages/public/RoadmapPage';
 
 function App() {
   return (
@@ -45,6 +46,7 @@ function App() {
             <Route path="/about" element={<AboutPage />} />
             <Route path="/features" element={<div className="container mx-auto py-20 px-4">Features Page (Coming Soon)</div>} />
             <Route path="/learning-preview" element={<LearningPage />} />
+            <Route path="/roadmap/:roadmapId" element={<RoadmapPage />} />
             <Route path="/contact" element={<ContactPage />} />
           </Route >
 

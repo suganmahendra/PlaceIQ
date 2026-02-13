@@ -52,17 +52,17 @@ export function MentorLogin() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-[#FAF5FF] p-4 relative overflow-hidden">
+        <div className="min-h-screen flex items-center justify-center bg-[#FAF5FF] p-4 pt-24 relative overflow-hidden">
             <AnimatedBackground />
 
             {/* Decorative elements */}
             <div className="absolute top-1/4 right-1/4 w-64 h-64 bg-primary/10 rounded-full blur-[100px] animate-pulse" />
             <div className="absolute bottom-1/4 left-1/4 w-64 h-64 bg-accent-violet/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1.5s' }} />
 
-            <div className="w-full max-w-[440px] relative z-10">
-                <div className="glass-card rounded-[32px] shadow-2xl p-8 md:p-10 border border-white/50 backdrop-blur-2xl">
+            <div className="w-full max-w-[550px] relative z-10">
+                <div className="glass-card rounded-[32px] shadow-2xl p-6 border border-white/50 backdrop-blur-2xl">
 
-                    <div className="text-center mb-10">
+                    <div className="text-center mb-8">
                         <Link to="/" className="inline-flex items-center gap-3 mb-6 group">
                             <div className="bg-text-primary p-3 rounded-2xl group-hover:scale-110 transition-transform duration-500 shadow-lg">
                                 <Award className="w-8 h-8 text-white" />
@@ -73,7 +73,7 @@ export function MentorLogin() {
                         <p className="text-text-secondary mt-2 font-medium">Empower the next generation of talent</p>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-6">
+                    <form onSubmit={handleSubmit} className="space-y-5">
                         {error && (
                             <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl flex items-center gap-3 animate-shake">
                                 <AlertCircle className="w-5 h-5 flex-shrink-0" />
