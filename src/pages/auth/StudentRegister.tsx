@@ -24,6 +24,7 @@ export function StudentRegister() {
         name: '',
         email: '',
         password: '',
+        confirmPassword: '',
         department: 'AI & Data Science', // Default as per requirements
     });
 
@@ -31,6 +32,12 @@ export function StudentRegister() {
         e.preventDefault();
         setIsSubmitting(true);
         setError(null);
+
+        if (formData.password !== formData.confirmPassword) {
+            setError("Passwords do not match");
+            setIsSubmitting(false);
+            return;
+        }
 
         try {
             await authService.registerStudent(
@@ -140,6 +147,18 @@ export function StudentRegister() {
                                 icon={<Lock className="text-primary/60 w-5 h-5" />}
                                 required
                                 className="bg-white/50 border-white/60 focus:bg-white transition-all rounded-2xl h-14"
+                            />
+
+                            <Input
+                                label="Confirm Password"
+                                type="password"
+                                placeholder="Re-enter your password"
+                                value={formData.confirmPassword}
+                                onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
+                                icon={<Lock className="text-primary/60 w-5 h-5" />}
+                                required
+                                className={`bg-white/50 border-white/60 focus:bg-white transition-all rounded-2xl h-14 ${formData.confirmPassword && formData.password !== formData.confirmPassword ? 'border-red-400 focus:ring-red-200' : ''
+                                    }`}
                             />
 
                             <div className="space-y-2">

@@ -4,33 +4,38 @@
   --font-sans: 'Outfit', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-display: 'Space Grotesk', system-ui, sans-serif;
 
-  /* Modern Tech Palette */
-  --color-primary: #7C3AED;
-  /* Electric Violet */
-  --color-primary-hover: #6D28D9;
+  /* Lavender Tech Palette */
+  --color-primary: #8B5CF6;
+  /* Violet 500 */
+  --color-primary-hover: #7C3AED;
+  /* Violet 600 */
   --color-primary-light: #A78BFA;
+  /* Violet 400 */
 
-  --color-secondary: #0EA5E9;
-  /* Sky Blue for futuristic accents */
-  --color-secondary-dark: #0284C7;
+  --color-secondary: #C084FC;
+  /* Purple 400 */
+  --color-secondary-dark: #A855F7;
+  /* Purple 500 */
 
-  --color-accent: #F43F5E;
-  /* Rose for high-impact buttons/alerts */
-  --color-accent-glow: #F472B6;
+  --color-accent: #F472B6;
+  /* Pink 400 */
+  --color-accent-glow: #FBCFE8;
+  /* Pink 200 */
 
-  /* Backgrounds - Ultra Clean */
-  --color-background-light: #FFFFFF;
-  --color-background-subtle: #F8FAFC;
-  /* Slate 50 */
-  --color-background-glass: rgba(255, 255, 255, 0.65);
+  /* Backgrounds - Lavender Dream */
+  --color-background-light: #FAF5FF;
+  /* Lavender Blush */
+  --color-background-subtle: #F3E8FF;
+  /* Purple 100 */
+  --color-background-glass: rgba(255, 255, 255, 0.45);
 
-  /* Text - High Contrast & Techy */
-  --color-text-primary: #0F172A;
-  /* Slate 900 - Sharp Black */
-  --color-text-secondary: #475569;
-  /* Slate 600 - Clean Grey */
-  --color-text-muted: #94A3B8;
-  /* Slate 400 */
+  /* Text - High Contrast on Lavender */
+  --color-text-primary: #4C1D95;
+  /* Violet 900 */
+  --color-text-secondary: #6D28D9;
+  /* Violet 700 */
+  --color-text-muted: #8B5CF6;
+  /* Violet 500 */
 
   --animate-sway-slow: sway 8s ease-in-out infinite alternate;
   --animate-sway-medium: sway 6s ease-in-out infinite alternate;
@@ -156,8 +161,8 @@
 }
 
 body {
-  /* Modern Tech Gradient: Subtle Slate/Blue hint */
-  background: radial-gradient(circle at top center, #F8FAFC 0%, #EFF6FF 100%);
+  /* Modern Tech Gradient: Lavender Dream */
+  background: radial-gradient(circle at top center, #F3E8FF 0%, #E9D5FF 100%);
   background-attachment: fixed;
   /* Ensures gradient stays while scrolling */
   color: var(--color-text-primary);

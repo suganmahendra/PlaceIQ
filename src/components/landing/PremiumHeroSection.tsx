@@ -12,12 +12,12 @@ export function PremiumHeroSection() {
             <NeuralBackground />
 
             {/* Clean Modern Gradient Overlay */}
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-100/40 via-transparent to-transparent pointer-events-none" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-100/40 via-transparent to-transparent pointer-events-none" />
 
-            {/* Subtle animated gradient waves - Refined */}
+            {/* Subtle animated gradient waves - Lavender Edition */}
             <div className="absolute inset-0 opacity-40 pointer-events-none">
                 <div
-                    className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-violet-200/20 via-sky-100/10 to-blue-200/20 animate-pulse"
+                    className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-violet-200/30 via-fuchsia-100/20 to-purple-200/30 animate-pulse"
                     style={{ animationDuration: '6s' }}
                 />
             </div>
@@ -27,10 +27,10 @@ export function PremiumHeroSection() {
                     {/* Left Content */}
                     <div className="space-y-8 animate-fade-in-up">
                         {/* Badge - Sleek and Modern */}
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/60 backdrop-blur-md border border-violet-200/50 shadow-sm hover:shadow-md transition-all duration-300">
-                            <div className="w-1.5 h-1.5 rounded-full bg-violet-600 animate-pulse" />
-                            <Brain className="w-3.5 h-3.5 text-violet-600" />
-                            <span className="text-xs font-bold tracking-wide uppercase text-violet-700">
+                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/60 backdrop-blur-md border border-purple-200/50 shadow-sm hover:shadow-md transition-all duration-300">
+                            <div className="w-1.5 h-1.5 rounded-full bg-purple-600 animate-pulse" />
+                            <Brain className="w-3.5 h-3.5 text-purple-600" />
+                            <span className="text-xs font-bold tracking-wide uppercase text-purple-700">
                                 AI-Powered Placement Platform
                             </span>
                         </div>
@@ -38,12 +38,12 @@ export function PremiumHeroSection() {
                         {/* Main Headline - Space Grotesk Font */}
                         <div className="space-y-4">
                             <h1 className="text-5xl md:text-7xl lg:text-7xl font-bold leading-tight tracking-tight font-[family-name:var(--font-display)]">
-                                <span className="text-slate-900">Where </span>
-                                <span className="bg-gradient-to-r from-violet-600 via-indigo-600 to-sky-500 bg-clip-text text-transparent pb-2 inline-block">
+                                <span className="text-text-primary">Where </span>
+                                <span className="bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-500 bg-clip-text text-transparent pb-2 inline-block">
                                     AI & Data Science
                                 </span>
                                 <br />
-                                <span className="text-slate-900">Students Become</span>
+                                <span className="text-text-primary">Students Become</span>
                                 <br />
                                 <span className="bg-gradient-to-r from-fuchsia-600 via-pink-600 to-rose-500 bg-clip-text text-transparent pb-2 inline-block">
                                     Placement-Ready
@@ -52,7 +52,7 @@ export function PremiumHeroSection() {
                         </div>
 
                         {/* Subheadline - Outfit Font */}
-                        <p className="text-lg md:text-xl text-slate-600 leading-relaxed max-w-xl font-[family-name:var(--font-sans)]">
+                        <p className="text-lg md:text-xl text-text-secondary leading-relaxed max-w-xl font-[family-name:var(--font-sans)]">
                             Master coding, conquer courses, and leverage AI intelligence to accelerate your journey from student to industry-ready professional.
                         </p>
 
@@ -61,7 +61,7 @@ export function PremiumHeroSection() {
                             <Link to="/register">
                                 <Button
                                     size="lg"
-                                    className="group w-full sm:w-auto px-8 py-6 text-lg bg-slate-900 hover:bg-slate-800 text-white shadow-xl shadow-slate-900/20 hover:shadow-slate-900/30 transition-all duration-300 border-0 rounded-2xl"
+                                    className="group w-full sm:w-auto px-8 py-6 text-lg bg-text-primary hover:bg-violet-900 text-white shadow-xl shadow-purple-900/20 hover:shadow-purple-900/30 transition-all duration-300 border-0 rounded-2xl"
                                 >
                                     Start Your Journey
                                     <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
@@ -82,22 +82,22 @@ export function PremiumHeroSection() {
                         {/* Stats */}
                         <div className="flex flex-wrap gap-8 pt-8">
                             <div className="space-y-1">
-                                <div className="text-3xl font-bold font-[family-name:var(--font-display)] bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">
+                                <div className="text-3xl font-bold font-[family-name:var(--font-display)] bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
                                     AI-Driven
                                 </div>
-                                <div className="text-sm text-slate-500 font-medium uppercase tracking-wider">Smart Learning</div>
+                                <div className="text-sm text-text-muted font-medium uppercase tracking-wider">Smart Learning</div>
                             </div>
                             <div className="space-y-1">
-                                <div className="text-3xl font-bold font-[family-name:var(--font-display)] bg-gradient-to-r from-sky-500 to-blue-600 bg-clip-text text-transparent">
+                                <div className="text-3xl font-bold font-[family-name:var(--font-display)] bg-gradient-to-r from-fuchsia-500 to-pink-600 bg-clip-text text-transparent">
                                     2 Pillars
                                 </div>
-                                <div className="text-sm text-slate-500 font-medium uppercase tracking-wider">Coding + Courses</div>
+                                <div className="text-sm text-text-muted font-medium uppercase tracking-wider">Coding + Courses</div>
                             </div>
                             <div className="space-y-1">
                                 <div className="text-3xl font-bold font-[family-name:var(--font-display)] bg-gradient-to-r from-rose-500 to-pink-600 bg-clip-text text-transparent">
                                     100% Ready
                                 </div>
-                                <div className="text-sm text-slate-500 font-medium uppercase tracking-wider">Placement Focus</div>
+                                <div className="text-sm text-text-muted font-medium uppercase tracking-wider">Placement Focus</div>
                             </div>
                         </div>
                     </div>
@@ -113,13 +113,13 @@ export function PremiumHeroSection() {
                         <FloatingDashboardCards />
 
                         {/* Decorative glow */}
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-violet-400/20 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '5s' }} />
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-400/20 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '5s' }} />
                     </div>
                 </div>
             </div>
 
             {/* Bottom fade */}
-            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white/80 to-transparent pointer-events-none" />
+            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background-light to-transparent pointer-events-none" />
         </section>
     );
 }

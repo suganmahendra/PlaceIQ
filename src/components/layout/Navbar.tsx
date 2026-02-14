@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, BrainCircuit, ChevronRight } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -83,28 +84,38 @@ export function Navbar() {
             </div>
 
             {/* Mobile Menu */}
-            {isOpen && (
-                <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-gray-100 shadow-lg p-4 flex flex-col gap-4 animate-in slide-in-from-top-5">
-                    {navLinks.map((link) => (
-                        <Link
-                            key={link.name}
-                            to={link.path}
-                            className="text-base font-medium text-text-primary hover:text-primary py-2 px-2 hover:bg-gray-50 rounded-lg"
-                            onClick={() => setIsOpen(false)}
-                        >
-                            {link.name}
-                        </Link>
-                    ))}
-                    <div className="border-t border-gray-100 pt-4 flex flex-col gap-2">
-                        <Link to="/login" onClick={() => setIsOpen(false)}>
-                            <Button variant="outline" className="w-full justify-center">Log In</Button>
-                        </Link>
-                        <Link to="/register" onClick={() => setIsOpen(false)}>
-                            <Button className="w-full justify-center">Get Started</Button>
-                        </Link>
-                    </div>
-                </div>
-            )}
+            <AnimatePresence>
+                {isOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3, ease: 'easeInOut' }}
+                        className="md:hidden overflow-hidden bg-white border-b border-gray-100 shadow-lg"
+                    >
+                        <div className="p-4 flex flex-col gap-4">
+                            {navLinks.map((link) => (
+                                <Link
+                                    key={link.name}
+                                    to={link.path}
+                                    className="text-base font-medium text-text-primary hover:text-primary py-2 px-2 hover:bg-gray-50 rounded-lg"
+                                    onClick={() => setIsOpen(false)}
+                                >
+                                    {link.name}
+                                </Link>
+                            ))}
+                            <div className="border-t border-gray-100 pt-4 flex flex-col gap-2">
+                                <Link to="/login" onClick={() => setIsOpen(false)}>
+                                    <Button variant="outline" className="w-full justify-center">Log In</Button>
+                                </Link>
+                                <Link to="/register" onClick={() => setIsOpen(false)}>
+                                    <Button className="w-full justify-center">Get Started</Button>
+                                </Link>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </nav>
     );
 }

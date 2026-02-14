@@ -80,21 +80,21 @@ export function AIChatbot() {
                 whileTap={{ scale: 0.95 }}
             >
                 {/* Glow Effect */}
-                <div className={`absolute -inset-4 bg-violet-500/40 rounded-full blur-xl transition-opacity duration-500 ${isOpen ? 'opacity-0' : 'opacity-100 animate-pulse'}`} />
+                <div className={`absolute -inset-4 bg-primary/40 rounded-full blur-xl transition-opacity duration-500 ${isOpen ? 'opacity-0' : 'opacity-100 animate-pulse'}`} />
 
                 <div className={`
                     relative flex items-center justify-center 
                     w-14 h-14 md:w-16 md:h-16 
-                    rounded-full border border-white/10 shadow-2xl backdrop-blur-xl 
+                    rounded-full border border-white/20 shadow-2xl backdrop-blur-xl 
                     transition-all duration-500
-                    ${isOpen ? 'bg-slate-900 border-slate-700 rotate-90' : 'bg-slate-900 border-indigo-500/30 rotate-0'}
+                    ${isOpen ? 'bg-text-primary border-slate-700 rotate-90' : 'bg-gradient-to-br from-primary to-secondary border-white/30 rotate-0'}
                 `}>
                     {isOpen ? (
                         <X className="w-6 h-6 text-white" />
                     ) : (
                         // Custom Cute Robot Face Icon
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-white relative z-10">
-                            <rect x="2" y="3" width="20" height="18" rx="5" className="fill-indigo-500/20 stroke-white/80" strokeWidth="2" />
+                            <rect x="2" y="3" width="20" height="18" rx="5" className="fill-white/10 stroke-white/90" strokeWidth="2" />
                             <path d="M7 10C7 10 7.5 10 9 10C10.5 10 11 10 11 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                             <path d="M13 10C13 10 13.5 10 15 10C16.5 10 17 10 17 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                             <path d="M8 15C8 15 10 17 12 17C14 17 16 15 16 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -106,8 +106,8 @@ export function AIChatbot() {
                 {/* Notification Badge - Only show when closed */}
                 {!isOpen && (
                     <span className="absolute -top-1 -right-1 flex h-4 w-4">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-4 w-4 bg-rose-500 border-2 border-white"></span>
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-glow opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-4 w-4 bg-accent border-2 border-white"></span>
                     </span>
                 )}
             </motion.button>
@@ -120,25 +120,25 @@ export function AIChatbot() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 20, scale: 0.95 }}
                         transition={{ duration: 0.2 }}
-                        className="absolute bottom-20 right-0 w-[350px] md:w-[380px] h-[500px] bg-white/90 backdrop-blur-2xl border border-white/40 shadow-2xl rounded-[2rem] flex flex-col overflow-hidden"
+                        className="absolute bottom-20 right-0 w-[300px] xs:w-[350px] md:w-[380px] h-[500px] max-h-[80vh] bg-white/80 backdrop-blur-2xl border border-white/50 shadow-2xl rounded-[2rem] flex flex-col overflow-hidden"
                     >
                         {/* Header */}
                         <div className="p-6 pb-4 bg-gradient-to-br from-primary/10 via-white/5 to-transparent border-b border-white/20 flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-2xl bg-primary/20 flex items-center justify-center p-1 border border-primary/30">
+                                <div className="w-10 h-10 rounded-2xl bg-white/40 flex items-center justify-center p-1 border border-white/50 shadow-sm">
                                     <Sparkles className="w-6 h-6 text-primary" />
                                 </div>
                                 <div>
                                     <h3 className="font-bold text-text-primary text-lg">PlaceIQ AI</h3>
                                     <div className="flex items-center gap-1.5">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-text-muted">Always Active</span>
+                                        <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-text-muted">Online</span>
                                     </div>
                                 </div>
                             </div>
                             <button
                                 onClick={() => setIsOpen(false)}
-                                className="p-2 hover:bg-slate-100 rounded-xl transition-colors text-slate-400 hover:text-slate-600"
+                                className="p-2 hover:bg-white/50 rounded-xl transition-colors text-text-muted hover:text-primary"
                             >
                                 <X className="w-4 h-4" />
                             </button>
@@ -154,8 +154,8 @@ export function AIChatbot() {
                                     className={`flex ${msg.sender === 'ai' ? 'justify-start' : 'justify-end'}`}
                                 >
                                     <div className={`max-w-[85%] p-4 rounded-2xl text-sm font-medium shadow-sm ${msg.sender === 'ai'
-                                        ? 'bg-white/80 border border-white/60 text-text-primary rounded-tl-none'
-                                        : 'bg-primary text-white rounded-tr-none'
+                                        ? 'bg-white border border-white/60 text-text-primary rounded-tl-none shadow-sm'
+                                        : 'bg-gradient-to-br from-primary to-secondary text-white rounded-tr-none shadow-md'
                                         }`}>
                                         {msg.text}
                                     </div>
@@ -163,7 +163,7 @@ export function AIChatbot() {
                             ))}
                             {isTyping && (
                                 <div className="flex justify-start">
-                                    <div className="bg-white/50 p-4 rounded-2xl rounded-tl-none border border-white/40 flex gap-1">
+                                    <div className="bg-white/60 p-4 rounded-2xl rounded-tl-none border border-white/40 flex gap-1">
                                         <div className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce" />
                                         <div className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:0.2s]" />
                                         <div className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:0.4s]" />
@@ -175,7 +175,7 @@ export function AIChatbot() {
                         {/* Contextual Suggestion */}
                         {!isTyping && messages.length < 4 && (
                             <div className="px-6 py-3">
-                                <div className="p-4 bg-primary/5 rounded-2xl border border-primary/20 space-y-3">
+                                <div className="p-4 bg-white/40 rounded-2xl border border-white/40 space-y-3 shadow-sm">
                                     <p className="text-xs text-text-primary font-bold flex items-center gap-2">
                                         <Sparkles className="w-3 h-3 text-primary" />
                                         {context.suggestion}
@@ -185,7 +185,7 @@ export function AIChatbot() {
                                             <button
                                                 key={action}
                                                 onClick={() => handleActionClick(action)}
-                                                className="text-[10px] font-black uppercase tracking-tighter px-3 py-1.5 bg-white border border-primary/10 rounded-lg hover:border-primary transition-colors text-primary"
+                                                className="text-[10px] font-black uppercase tracking-tighter px-3 py-1.5 bg-white border border-white/60 rounded-lg hover:border-primary transition-colors text-primary shadow-sm hover:shadow-md"
                                             >
                                                 {action}
                                             </button>
@@ -204,16 +204,16 @@ export function AIChatbot() {
                                     onChange={(e) => setInputValue(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && handleSend(inputValue)}
                                     placeholder="Type your message..."
-                                    className="w-full bg-white/40 border border-white/60 rounded-2xl px-5 py-4 pr-14 text-sm focus:outline-none focus:bg-white focus:border-primary transition-all ring-0 shadow-inner placeholder:text-text-muted/50"
+                                    className="w-full bg-white/50 border border-white/60 rounded-2xl px-5 py-4 pr-14 text-sm focus:outline-none focus:bg-white focus:border-primary/30 transition-all ring-0 shadow-inner placeholder:text-text-muted/60 text-text-primary"
                                 />
                                 <button
                                     onClick={() => handleSend(inputValue)}
-                                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-text-primary hover:bg-black text-white rounded-xl transition-all shadow-lg"
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-gradient-to-r from-primary to-secondary hover:shadow-lg hover:scale-105 text-white rounded-xl transition-all shadow-md"
                                 >
-                                    <Send className="w-5 h-5" />
+                                    <Send className="w-4 h-4" />
                                 </button>
                             </div>
-                            <p className="text-center text-[10px] font-medium text-slate-400 mt-3">
+                            <p className="text-center text-[10px] font-medium text-text-muted/60 mt-3">
                                 Powered by PlaceIQ Neural Engine
                             </p>
                         </div>

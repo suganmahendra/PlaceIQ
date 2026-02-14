@@ -25,6 +25,7 @@ export function MentorRegister() {
         name: '',
         email: '',
         password: '',
+        confirmPassword: '',
         expertise: '',
     });
 
@@ -32,6 +33,12 @@ export function MentorRegister() {
         e.preventDefault();
         setIsSubmitting(true);
         setError(null);
+
+        if (formData.password !== formData.confirmPassword) {
+            setError("Passwords do not match");
+            setIsSubmitting(false);
+            return;
+        }
 
         try {
             await authService.registerMentor(
@@ -143,6 +150,18 @@ export function MentorRegister() {
                                 icon={<Lock className="text-primary/60 w-5 h-5" />}
                                 required
                                 className="bg-white/40 border-white/60 focus:bg-white rounded-2xl h-14"
+                            />
+
+                            <Input
+                                label="Confirm Password"
+                                type="password"
+                                placeholder="Re-enter your password"
+                                value={formData.confirmPassword}
+                                onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
+                                icon={<Lock className="text-primary/60 w-5 h-5" />}
+                                required
+                                className={`bg-white/40 border-white/60 focus:bg-white rounded-2xl h-14 ${formData.confirmPassword && formData.password !== formData.confirmPassword ? 'border-red-400 focus:ring-red-200' : ''
+                                    }`}
                             />
 
                             <Input
