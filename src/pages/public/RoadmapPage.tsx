@@ -74,8 +74,7 @@ export const RoadmapPage: React.FC = () => {
 
     const colors = getColorClasses(roadmap.color);
 
-    // Calculate total lessons/topics
-    const totalTopics = roadmap.course_modules?.reduce((acc, mod) => acc + (mod.course_lessons?.length || 0), 0) || 0;
+
 
     const handleStartLearning = () => {
         if (user) {

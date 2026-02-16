@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Video, Code, FileText, Trash2, Edit2 } from 'lucide-react';
-import { cmsService, type CourseLesson, type CourseModule } from '../../../services/cmsService';
+import { cmsService, type CourseLesson } from '../../../services/cmsService';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 
@@ -10,7 +10,8 @@ export function PhaseManager() {
     const navigate = useNavigate();
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [module, setModule] = useState<CourseModule | null>(null);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    // const [module, setModule] = useState<CourseModule | null>(null);
     const [lessons, setLessons] = useState<CourseLesson[]>([]);
     const [loading, setLoading] = useState(true);
 

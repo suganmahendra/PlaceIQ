@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
     BookOpen,
-    Code,
     Brain,
     Trophy,
     Terminal,
@@ -18,11 +17,9 @@ import {
     Network
 } from 'lucide-react';
 import { roadmapService } from '../../services/RoadmapService';
-import type { Database as DBTypes } from '../../types/database.types';
 
-type CourseRow = DBTypes['public']['Tables']['courses']['Row'] & {
-    course_modules: { count: number }[];
-};
+
+
 
 const iconMap: Record<string, React.ReactNode> = {
     'Web Development': <Globe className="w-6 h-6" />,

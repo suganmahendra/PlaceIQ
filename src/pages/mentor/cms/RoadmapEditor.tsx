@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Layers, BookOpen, Save, Trash2, ChevronRight, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Plus, Layers, BookOpen, Save, Trash2, ChevronRight } from 'lucide-react';
 import { cmsService, type Course, type CourseModule } from '../../../services/cmsService';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
