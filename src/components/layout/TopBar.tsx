@@ -1,10 +1,18 @@
-import { Bell, Search, Menu } from 'lucide-react';
+import { Bell, Search, Menu, User } from 'lucide-react';
 
 interface TopBarProps {
     onMenuClick?: () => void;
 }
 
+import { useAuth } from '../../contexts/AuthContext';
+
 export function TopBar({ onMenuClick }: TopBarProps) {
+    const { profile, role } = useAuth();
+    const displayName = profile?.full_name || 'User';
+    const displayRole = role ? role.charAt(0).toUpperCase() + role.slice(1) : 'Student';
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const avatarUrl = (profile as any)?.avatar_url;
+
     return (
         <header className="h-16 bg-white/60 backdrop-blur-xl border-b border-white/20 flex items-center justify-between px-4 md:px-6 sticky top-0 z-20 shadow-sm transition-all supports-[backdrop-filter]:bg-white/60">
             <div className="flex items-center gap-4 flex-1">
@@ -40,12 +48,16 @@ export function TopBar({ onMenuClick }: TopBarProps) {
                 {/* Profile Dropdown */}
                 <div className="flex items-center gap-3 pl-2 sm:pl-4 border-l border-gray-100 cursor-pointer group">
                     <div className="hidden sm:block text-right">
-                        <p className="text-sm font-semibold text-gray-900 group-hover:text-primary transition-colors">John Doe</p>
-                        <p className="text-xs text-gray-500">Student</p>
+                        <p className="text-sm font-semibold text-gray-900 group-hover:text-primary transition-colors">{displayName}</p>
+                        <p className="text-xs text-gray-500">{displayRole}</p>
                     </div>
                     <div className="w-9 h-9 rounded-full bg-gradient-to-r from-primary to-accent p-[2px] transition-transform group-hover:scale-105 shadow-sm">
                         <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=John" alt="Avatar" className="w-full h-full object-cover" />
+                            {avatarUrl ? (
+                                <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                            ) : (
+                                <User className="w-5 h-5 text-gray-400" />
+                            )}
                         </div>
                     </div>
                 </div>

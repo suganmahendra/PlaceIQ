@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -13,15 +13,26 @@ import {
     ArrowRight,
     PlayCircle,
     FileText,
-    MessageSquare
+    MessageSquare,
+    Database,
+    Network
 } from 'lucide-react';
-import roadmapsData from '../../data/roadmaps';
+import { roadmapService } from '../../services/RoadmapService';
+import type { Database as DBTypes } from '../../types/database.types';
+
+type CourseRow = DBTypes['public']['Tables']['courses']['Row'] & {
+    course_modules: { count: number }[];
+};
 
 const iconMap: Record<string, React.ReactNode> = {
-    Globe: <Globe className="w-6 h-6" />,
-    Code: <Code className="w-6 h-6" />,
-    Cpu: <Cpu className="w-6 h-6" />,
-    MessageSquare: <MessageSquare className="w-6 h-6" />,
+    'Web Development': <Globe className="w-6 h-6" />,
+    'Computer Science': <Cpu className="w-6 h-6" />,
+    'Soft Skills': <MessageSquare className="w-6 h-6" />,
+    'Artificial Intelligence': <Brain className="w-6 h-6" />,
+    'DevOps': <Terminal className="w-6 h-6" />,
+    'Architecture': <Database className="w-6 h-6" />,
+    'Network': <Network className="w-6 h-6" />,
+    'default': <BookOpen className="w-6 h-6" />
 };
 
 const colorMap: Record<string, string> = {
@@ -33,16 +44,33 @@ const colorMap: Record<string, string> = {
 
 export const LearningPage: React.FC = () => {
     const navigate = useNavigate();
+    const [tracks, setTracks] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const tracks = roadmapsData.map((roadmap) => ({
-        id: roadmap.id,
-        title: roadmap.title,
-        icon: iconMap[roadmap.icon] || <BookOpen className="w-6 h-6" />,
-        modules: `${roadmap.modules} Modules`,
-        level: roadmap.level,
-        color: colorMap[roadmap.color] || 'bg-blue-500/20 text-blue-600',
-        description: roadmap.description
-    }));
+    useEffect(() => {
+        const loadTracks = async () => {
+            try {
+                const data = await roadmapService.getRoadmaps();
+                if (data) {
+                    const mappedTracks = data.map((course: any) => ({
+                        id: course.slug, // Use slug for navigation
+                        title: course.title,
+                        icon: iconMap[course.category || 'default'] || iconMap['default'],
+                        modules: `${course.course_modules?.length || 0} Modules`,
+                        level: course.difficulty,
+                        color: colorMap[course.color || 'blue'] || colorMap.blue,
+                        description: course.description
+                    }));
+                    setTracks(mappedTracks);
+                }
+            } catch (error) {
+                console.error("Failed to load tracks:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadTracks();
+    }, []);
 
     const features = [
         {
@@ -92,38 +120,44 @@ export const LearningPage: React.FC = () => {
                     </button>
                 </div>
 
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {tracks.map((track, index) => (
-                        <motion.div
-                            key={index}
-                            whileHover={{ y: -10 }}
-                            className="glass-card p-1 rounded-3xl group"
-                        >
-                            <div className="p-6 space-y-6 bg-white/40 rounded-[1.5rem] h-full transition-colors group-hover:bg-white/60">
-                                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${track.color}`}>
-                                    {track.icon}
-                                </div>
-                                <div className="space-y-2">
-                                    <h3 className="text-xl font-bold">{track.title}</h3>
-                                    <div className="flex gap-3 text-xs font-semibold uppercase tracking-wider text-text-muted">
-                                        <span>{track.modules}</span>
-                                        <span>•</span>
-                                        <span>{track.level}</span>
+                {loading ? (
+                    <div className="flex justify-center py-20">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                    </div>
+                ) : (
+                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {tracks.map((track, index) => (
+                            <motion.div
+                                key={index}
+                                whileHover={{ y: -10 }}
+                                className="glass-card p-1 rounded-3xl group"
+                            >
+                                <div className="p-6 space-y-6 bg-white/40 rounded-[1.5rem] h-full transition-colors group-hover:bg-white/60">
+                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${track.color}`}>
+                                        {track.icon}
                                     </div>
-                                    <p className="text-text-secondary text-sm leading-relaxed pt-2">
-                                        {track.description}
-                                    </p>
+                                    <div className="space-y-2">
+                                        <h3 className="text-xl font-bold">{track.title}</h3>
+                                        <div className="flex gap-3 text-xs font-semibold uppercase tracking-wider text-text-muted">
+                                            <span>{track.modules}</span>
+                                            <span>•</span>
+                                            <span>{track.level}</span>
+                                        </div>
+                                        <p className="text-text-secondary text-sm leading-relaxed pt-2 line-clamp-3">
+                                            {track.description}
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={() => navigate(`/roadmap/${track.id}`)}
+                                        className="flex items-center gap-2 text-sm font-bold text-primary group-hover:underline"
+                                    >
+                                        View Roadmap <ArrowRight className="w-4 h-4" />
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={() => navigate(`/roadmap/${track.id}`)}
-                                    className="flex items-center gap-2 text-sm font-bold text-primary group-hover:underline"
-                                >
-                                    View Roadmap <ArrowRight className="w-4 h-4" />
-                                </button>
-                            </div>
-                        </motion.div>
-                    ))}
-                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+                )}
             </section>
 
             {/* Interactive Features */}

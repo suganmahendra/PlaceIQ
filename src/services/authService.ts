@@ -13,7 +13,13 @@ export const authService = {
     /**
      * Register a new student
      */
-    async registerStudent(email: string, password: string, fullName: string, department: string = 'AI & Data Science') {
+    async registerStudent(
+        email: string,
+        password: string,
+        fullName: string,
+        department: string = 'AI & Data Science',
+        registerNumber: string
+    ) {
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
@@ -22,6 +28,7 @@ export const authService = {
                     full_name: fullName,
                     role: 'student',
                     department: department,
+                    register_number: registerNumber
                 },
                 emailRedirectTo: `${window.location.origin}/auth/callback`,
             },
@@ -40,6 +47,11 @@ export const authService = {
      * Register a new mentor
      */
     async registerMentor(email: string, password: string, fullName: string, expertise: string) {
+        // Enforce Organization Email Domain
+        if (!email.toLowerCase().endsWith('@mahendracollege.com')) {
+            throw new Error('Mentors must use an official @mahendracollege.com email address.');
+        }
+
         const { data, error } = await supabase.auth.signUp({
             email,
             password,

@@ -25,8 +25,13 @@ import { AnalyticsPage } from './pages/student/AnalyticsPage';
 import { PlacementsPage } from './pages/student/PlacementsPage';
 import { AIChatbotPage } from './pages/student/AIChatbotPage';
 import { ProfilePage } from './pages/student/ProfilePage';
+import { AnnouncementsPage } from './pages/student/AnnouncementsPage';
 import { CourseDetailPage } from './pages/student/CourseDetailPage';
 import { RoadmapPage } from './pages/public/RoadmapPage';
+import { DashboardHome as MentorDashboard } from './pages/mentor/DashboardHome';
+import { CMSDashboard } from './pages/mentor/cms/CMSDashboard';
+import { RoadmapEditor } from './pages/mentor/cms/RoadmapEditor';
+import { PhaseManager } from './pages/mentor/cms/PhaseManager';
 
 function App() {
   return (
@@ -67,6 +72,7 @@ function App() {
             <Route path="analytics" element={<AnalyticsPage />} />
             <Route path="ai-chat" element={<AIChatbotPage />} />
             <Route path="placements" element={<PlacementsPage />} />
+            <Route path="announcements" element={<AnnouncementsPage />} />
             <Route path="profile" element={<ProfilePage />} />
           </Route >
 
@@ -76,7 +82,11 @@ function App() {
               <DashboardLayout />
             </AuthGuard >
           }>
-            <Route path="dashboard" element={<div className="p-10 text-center text-gray-500">Mentor Dashboard (Coming Soon)</div>} />
+            <Route path="dashboard" element={<MentorDashboard />} />
+            <Route path="cms" element={<CMSDashboard />} />
+            <Route path="cms/new" element={<RoadmapEditor />} />
+            <Route path="cms/roadmap/:id" element={<RoadmapEditor />} />
+            <Route path="cms/phases/:moduleId" element={<PhaseManager />} />
           </Route >
         </Routes >
       </BrowserRouter >

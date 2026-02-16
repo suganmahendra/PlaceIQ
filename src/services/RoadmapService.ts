@@ -1,13 +1,24 @@
 import { supabase } from '../lib/supabase';
+import type { Database } from '../types/database.types';
 
-export const courseService = {
+export type Course = Database['public']['Tables']['courses']['Row'];
+export type CourseModule = Database['public']['Tables']['course_modules']['Row'];
+export type CourseLesson = Database['public']['Tables']['course_lessons']['Row'];
+
+export type RoadmapFull = Course & {
+    course_modules: (CourseModule & {
+        course_lessons: CourseLesson[];
+    })[];
+};
+
+export const roadmapService = {
     /**
-     * Fetch all published courses
+     * Fetch all published roadmaps (courses)
      */
-    async getCourses() {
+    async getRoadmaps() {
         const { data, error } = await supabase
             .from('courses')
-            .select('*')
+            .select('*, course_modules (id)')
             .eq('is_published', true)
             .order('created_at', { ascending: false });
 
@@ -16,25 +27,56 @@ export const courseService = {
     },
 
     /**
-     * Fetch a single course by slug with its modules and lessons
+     * Fetch a single roadmap by slug with all content
      */
-    async getCourseBySlug(slug: string) {
-        const { data: course, error: courseError } = await supabase
+    async getRoadmapBySlug(slug: string) {
+        const { data, error } = await supabase
             .from('courses')
             .select(`
-        *,
-        course_modules (
-          *,
-          course_lessons (
-            *
-          )
-        )
-      `)
+                *,
+                course_modules (
+                    *,
+                    course_lessons (*)
+                )
+            `)
             .eq('slug', slug)
             .single();
 
-        if (courseError) throw courseError;
-        return course;
+        if (error) throw error;
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const rawData = data as any; // Cast to avoid deep type mismatch
+
+        if (rawData) {
+            const Roadmap = rawData as RoadmapFull;
+
+            if (Roadmap.course_modules) {
+                // Sort modules
+                Roadmap.course_modules.sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+
+                // Sort lessons within modules
+                Roadmap.course_modules.forEach(module => {
+                    if (module.course_lessons) {
+                        module.course_lessons.sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+                    }
+                });
+            }
+            return Roadmap;
+        }
+        return null;
+    },
+
+    /**
+     * Get enrollments for the current user to display progress
+     */
+    async getUserEnrollments(userId: string) {
+        const { data, error } = await supabase
+            .from('enrollments')
+            .select('*')
+            .eq('student_id', userId);
+
+        if (error) throw error;
+        return data;
     },
 
     /**
@@ -72,6 +114,19 @@ export const courseService = {
     },
 
     /**
+     * Fetch all lesson progress for an enrollment
+     */
+    async getLessonProgress(enrollmentId: string) {
+        const { data, error } = await supabase
+            .from('lesson_progress')
+            .select('*')
+            .eq('enrollment_id', enrollmentId);
+
+        if (error) throw error;
+        return data;
+    },
+
+    /**
      * Update lesson progress
      */
     async updateLessonProgress(
@@ -87,7 +142,7 @@ export const courseService = {
                 lesson_id: lessonId,
                 watch_time_seconds: watchTimeSeconds,
                 is_completed: isCompleted,
-                last_watched_at: new RegExp('utc').test('utc') ? new Date().toISOString() : new Date().toISOString() // Simpler:
+                last_watched_at: new Date().toISOString()
             }, {
                 onConflict: 'enrollment_id,lesson_id'
             })
@@ -150,34 +205,5 @@ export const courseService = {
             .eq('id', enrollmentId);
 
         return progressPercent;
-    },
-
-    /**
-     * Fetch student's enrollments with course details
-     */
-    async getStudentEnrollments(studentId: string) {
-        const { data, error } = await supabase
-            .from('enrollments')
-            .select(`
-        *,
-        courses (*)
-      `)
-            .eq('student_id', studentId);
-
-        if (error) throw error;
-        return data;
-    },
-
-    /**
-     * Fetch all lesson progress for an enrollment
-     */
-    async getLessonProgress(enrollmentId: string) {
-        const { data, error } = await supabase
-            .from('lesson_progress')
-            .select('*')
-            .eq('enrollment_id', enrollmentId);
-
-        if (error) throw error;
-        return data;
     }
 };

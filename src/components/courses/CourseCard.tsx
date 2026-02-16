@@ -33,8 +33,9 @@ export function CourseCard({
     progress,
     icon: Icon,
     certificateEarned,
-    category = 'AI & DS'
-}: CourseCardProps) {
+    category = 'AI & DS',
+    thumbnailUrl
+}: CourseCardProps & { thumbnailUrl?: string | null }) {
     const isCompleted = progress === 100;
 
     return (
@@ -46,9 +47,18 @@ export function CourseCard({
                 {/* Top Section: Icon & Header */}
                 <div className="flex items-start justify-between mb-6 relative z-10">
                     <div className="flex items-center gap-4">
-                        <div className="bg-gradient-to-br from-primary/10 to-accent-violet/10 p-4 rounded-2xl group-hover:scale-110 transition-transform duration-500 border border-primary/10">
-                            <Icon className="w-8 h-8 text-primary" />
-                        </div>
+                        {thumbnailUrl ? (
+                            <img
+                                src={thumbnailUrl}
+                                alt={name}
+                                className="w-16 h-16 rounded-2xl object-cover shadow-sm border border-gray-100 bg-white"
+                            />
+                        ) : (
+                            <div className="bg-gradient-to-br from-primary/10 to-accent-violet/10 p-4 rounded-2xl group-hover:scale-110 transition-transform duration-500 border border-primary/10">
+                                <Icon className="w-8 h-8 text-primary" />
+                            </div>
+                        )}
+
                         <div>
                             <div className="flex items-center gap-2 mb-1">
                                 <Badge variant="info" size="sm" className="bg-primary/5 text-primary border-primary/10 font-bold uppercase tracking-tighter">

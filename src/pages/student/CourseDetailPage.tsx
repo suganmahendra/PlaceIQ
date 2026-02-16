@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
     ChevronLeft,
     ChevronDown,
@@ -17,7 +17,8 @@ import {
     Sparkles
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { courseService } from '../../services/courseService';
+import { roadmapService, type RoadmapFull } from '../../services/RoadmapService';
+import { quizService, type Quiz } from '../../services/QuizService';
 import { VideoPlayer } from '../../components/ui/VideoPlayer';
 import { ProgressBar } from '../../components/ui/ProgressBar';
 import { ProgressRing } from '../../components/ui/ProgressRing';
@@ -26,23 +27,20 @@ import { Button } from '../../components/ui/Button';
 import { cn } from '../../lib/utils';
 import type { Database } from '../../types/database.types';
 
-type Course = Database['public']['Tables']['courses']['Row'] & {
-    course_modules: (Database['public']['Tables']['course_modules']['Row'] & {
-        course_lessons: Database['public']['Tables']['course_lessons']['Row'][]
-    })[]
-};
 type Enrollment = Database['public']['Tables']['enrollments']['Row'];
 type LessonProgress = Database['public']['Tables']['lesson_progress']['Row'];
 type Lesson = Database['public']['Tables']['course_lessons']['Row'];
 
 export function CourseDetailPage() {
     const { slug } = useParams<{ slug: string }>();
+    const navigate = useNavigate();
     const { profile, loading: authLoading } = useAuth();
-    const [course, setCourse] = useState<Course | null>(null);
+    const [course, setCourse] = useState<RoadmapFull | null>(null);
     const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
     const [lessonProgress, setLessonProgress] = useState<LessonProgress[]>([]);
     const [expandedModules, setExpandedModules] = useState<string[]>([]);
     const [selectedVideo, setSelectedVideo] = useState<Lesson | null>(null);
+    const [quiz, setQuiz] = useState<Quiz | null>(null);
     const [loading, setLoading] = useState(true);
     const [isEnrolling, setIsEnrolling] = useState(false);
     const [isCompleting, setIsCompleting] = useState(false);
@@ -51,12 +49,13 @@ export function CourseDetailPage() {
         const fetchCourseDetails = async () => {
             if (!slug) return;
             try {
-                const fetchedCourse = await courseService.getCourseBySlug(slug) as unknown as Course;
+                // Use RoadmapService
+                const fetchedCourse = await roadmapService.getRoadmapBySlug(slug);
                 if (!fetchedCourse) {
                     setLoading(false);
                     return;
                 }
-                setCourse(fetchedCourse as Course);
+                setCourse(fetchedCourse);
 
                 // Auto-expand the first module
                 if (fetchedCourse.course_modules?.length > 0) {
@@ -64,12 +63,12 @@ export function CourseDetailPage() {
                 }
 
                 if (profile && 'id' in profile) {
-                    const fetchedEnrollment = await courseService.checkEnrollment(profile.id, fetchedCourse.id);
+                    const fetchedEnrollment = await roadmapService.checkEnrollment(profile.id, fetchedCourse.id);
                     setEnrollment(fetchedEnrollment);
 
                     if (fetchedEnrollment) {
-                        const progress = await courseService.getLessonProgress(fetchedEnrollment.id);
-                        setLessonProgress(progress);
+                        const progress = await roadmapService.getLessonProgress(fetchedEnrollment.id);
+                        setLessonProgress(progress || []);
                     }
                 }
             } catch (error) {
@@ -84,11 +83,23 @@ export function CourseDetailPage() {
         }
     }, [slug, profile, authLoading]);
 
+    useEffect(() => {
+        const fetchQuiz = async () => {
+            if (selectedVideo) {
+                const q = await quizService.getQuizByLessonId(selectedVideo.id);
+                setQuiz(q);
+            } else {
+                setQuiz(null);
+            }
+        };
+        fetchQuiz();
+    }, [selectedVideo]);
+
     const handleEnroll = async () => {
         if (!profile || !course || !('id' in profile)) return;
         setIsEnrolling(true);
         try {
-            const newEnrollment = await courseService.enrollStudent(profile.id, course.id);
+            const newEnrollment = await roadmapService.enrollStudent(profile.id, course.id);
             setEnrollment(newEnrollment);
             setLessonProgress([]);
         } catch (error) {
@@ -102,15 +113,15 @@ export function CourseDetailPage() {
         if (!enrollment) return;
         setIsCompleting(true);
         try {
-            await courseService.updateLessonProgress(enrollment.id, lessonId, 0, true);
+            await roadmapService.updateLessonProgress(enrollment.id, lessonId, 0, true);
 
             // Refresh data
-            const updatedProgress = await courseService.getLessonProgress(enrollment.id);
-            setLessonProgress(updatedProgress);
+            const updatedProgress = await roadmapService.getLessonProgress(enrollment.id);
+            setLessonProgress(updatedProgress || []);
 
             // Re-fetch enrollment to get updated overall progress
             if (profile && 'id' in profile && course) {
-                const updatedEnrollment = await courseService.checkEnrollment(profile.id, course.id);
+                const updatedEnrollment = await roadmapService.checkEnrollment(profile.id, course.id);
                 setEnrollment(updatedEnrollment);
             }
         } catch (error) {
@@ -448,7 +459,7 @@ export function CourseDetailPage() {
                             <div className="flex flex-col md:flex-row gap-8 items-start">
                                 <div className="flex-1 space-y-4">
                                     <h4 className="text-2xl font-black text-gray-900">Lesson Overview</h4>
-                                    <p className="text-gray-600 leading-relaxed text-lg">
+                                    <p className="text-gray-600 leading-relaxed text-lg whitespace-pre-line">
                                         {selectedVideo.content_markdown || "In this lesson, we cover advanced concepts related to this topic. Follow along with the code-along sections to maximize your understanding."}
                                     </p>
                                 </div>
@@ -461,6 +472,16 @@ export function CourseDetailPage() {
                                     >
                                         {isLessonCompleted(selectedVideo.id) ? 'Already Completed' : 'Mark as Complete'}
                                     </Button>
+
+                                    {isLessonCompleted(selectedVideo.id) && quiz && (
+                                        <Button
+                                            className="h-14 font-black rounded-2xl text-lg bg-gradient-to-r from-yellow-400 to-orange-500 text-white shadow-xl shadow-orange-200 mt-2 hover:scale-[1.02] transition-transform animate-pulse"
+                                            onClick={() => navigate(`/student/quiz?id=${quiz.id}`)}
+                                        >
+                                            Start Quiz: {quiz.title}
+                                        </Button>
+                                    )}
+
                                     <Button variant="outline" className="h-14 font-bold rounded-2xl border-gray-200 hover:bg-gray-50">
                                         Download Code Files
                                     </Button>

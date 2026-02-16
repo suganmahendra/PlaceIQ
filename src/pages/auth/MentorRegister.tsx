@@ -40,6 +40,13 @@ export function MentorRegister() {
             return;
         }
 
+        // Validate email domain for mentors
+        if (!formData.email.trim().toLowerCase().endsWith('@mahendracollege.com')) {
+            setError("Mentor registration is restricted to authorized staff only (@mahendracollege.com).");
+            setIsSubmitting(false);
+            return;
+        }
+
         try {
             await authService.registerMentor(
                 formData.email,
@@ -133,7 +140,7 @@ export function MentorRegister() {
                             <Input
                                 label="Work Email"
                                 type="email"
-                                placeholder="sarah@organization.com"
+                                placeholder="name@mahendracollege.com"
                                 value={formData.email}
                                 onChange={e => setFormData({ ...formData, email: e.target.value })}
                                 icon={<Mail className="text-primary/60 w-5 h-5" />}
@@ -217,7 +224,7 @@ export function MentorRegister() {
                     </div>
 
                     <div className="mt-8 text-center text-sm font-medium">
-                        <Link to="/login" className="text-text-muted hover:text-primary transition-colors">
+                        <Link to="/login-mentor" className="text-text-muted hover:text-primary transition-colors">
                             Already part of our network? <span className="text-primary font-bold">Sign in here</span>
                         </Link>
                     </div>

@@ -1,5 +1,6 @@
 import { Award, Zap, BookOpen, Target, ChevronRight, PlayCircle, Clock, CheckCircle2, TrendingUp, type LucideIcon } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { AnnouncementsList } from '../../components/dashboard/AnnouncementsList';
 import { useAuth } from '../../contexts/AuthContext';
 import type { Database } from '../../types/database.types';
 
@@ -63,26 +64,26 @@ export function DashboardHome() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard
                     icon={Zap} color="text-yellow-500" bg="bg-yellow-50"
-                    label="Current Streak" value="12 Days"
-                    subtext="+2 from last week"
+                    label="Readiness Score" value={`${studentProfile?.readiness_score || 0}%`}
+                    subtext="Keep improving!"
                     trend="up"
                 />
                 <StatCard
                     icon={Award} color="text-purple-500" bg="bg-purple-50"
-                    label="XP Earned" value="2,450 XP"
-                    subtext="Level 5 Scholar"
+                    label="XP Earned" value={`${xp} XP`}
+                    subtext={`Level: ${level}`}
                     trend="up"
                 />
                 <StatCard
                     icon={Target} color="text-blue-500" bg="bg-blue-50"
-                    label="Skill Level" value="Intermediate"
-                    subtext="Top 15% of peers"
+                    label="Skill Level" value={level}
+                    subtext="Based on your progress"
                     trend="neutral"
                 />
                 <StatCard
                     icon={BookOpen} color="text-green-500" bg="bg-green-50"
-                    label="Modules Done" value="14/20"
-                    subtext="70% Completion"
+                    label="Profile Status" value={`${profileCompletion}%`}
+                    subtext="Completion Rate"
                     trend="up"
                 />
             </div>
@@ -134,6 +135,13 @@ export function DashboardHome() {
                 {/* Sidebar Widgets */}
                 <div className="space-y-6">
                     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-bold text-gray-900">Announcements</h3>
+                        </div>
+                        <AnnouncementsList />
+                    </div>
+
+                    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                         <h3 className="font-bold text-gray-900 mb-6">Skill Analysis</h3>
                         {/* Simulated Chart */}
                         <div className="flex justify-center mb-6">
@@ -144,7 +152,7 @@ export function DashboardHome() {
                                     <circle cx="50" cy="50" r="45" fill="none" stroke="#6A0DAD" strokeWidth="10" strokeDasharray="220" strokeDashoffset="50" strokeLinecap="round" className="animate-[dash_1s_ease-out_forwards]" />
                                 </svg>
                                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                    <span className="text-3xl font-bold text-gray-900">72%</span>
+                                    <span className="text-3xl font-bold text-gray-900">{studentProfile?.readiness_score || 0}%</span>
                                     <span className="text-xs text-gray-500 uppercase">Readiness</span>
                                 </div>
                             </div>

@@ -12,6 +12,7 @@ import {
     ChevronLeft,
     ChevronRight,
     BrainCircuit,
+    Bell,
 } from 'lucide-react';
 
 const sidebarLinks = [
@@ -20,6 +21,7 @@ const sidebarLinks = [
     { name: 'Practice & Quiz', path: '/student/quiz', icon: Gamepad2 },
     { name: 'Analytics', path: '/student/analytics', icon: BarChart2 },
     { name: 'AI Chatbot', path: '/student/ai-chat', icon: MessageSquare },
+    { name: 'Announcements', path: '/student/announcements', icon: Bell },
     { name: 'Placements', path: '/student/placements', icon: Briefcase },
     { name: 'Profile', path: '/student/profile', icon: User },
 ];

@@ -22,6 +22,7 @@ export function StudentRegister() {
     const [error, setError] = useState<string | null>(null);
     const [formData, setFormData] = useState({
         name: '',
+        registerNumber: '',
         email: '',
         password: '',
         confirmPassword: '',
@@ -44,7 +45,8 @@ export function StudentRegister() {
                 formData.email,
                 formData.password,
                 formData.name,
-                formData.department
+                formData.department,
+                formData.registerNumber
             );
 
             // Handle success
@@ -128,9 +130,19 @@ export function StudentRegister() {
                             />
 
                             <Input
+                                label="Register Number"
+                                placeholder="621522243..."
+                                value={formData.registerNumber}
+                                onChange={e => setFormData({ ...formData, registerNumber: e.target.value })}
+                                icon={<ShieldCheck className="text-primary/60 w-5 h-5" />}
+                                required
+                                className="bg-white/50 border-white/60 focus:bg-white transition-all rounded-2xl h-14"
+                            />
+
+                            <Input
                                 label="Email Address"
                                 type="email"
-                                placeholder="name@college.edu"
+                                placeholder="student@gmail.com"
                                 value={formData.email}
                                 onChange={e => setFormData({ ...formData, email: e.target.value })}
                                 icon={<Mail className="text-primary/60 w-5 h-5" />}

@@ -61,6 +61,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         user_id: user.id,
                         full_name: fullName,
                         email: user.email || '', // Essential for the new NOT NULL column
+                        register_number: user.user_metadata?.register_number || null,
                         level: 'Beginner',
                         xp: 0,
                         readiness_score: 0,

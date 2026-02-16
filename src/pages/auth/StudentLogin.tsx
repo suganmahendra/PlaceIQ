@@ -1,3 +1,4 @@
+import { supabase } from '../../lib/supabase'; // Import Supabase
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
@@ -12,12 +13,14 @@ import {
     ArrowRight,
     Chrome,
     Fingerprint,
-    AlertCircle
+    AlertCircle,
+    ShieldCheck // Add ShieldCheck icon
 } from 'lucide-react';
 import { authService } from '../../services/authService';
 
 export function StudentLogin() {
     const navigate = useNavigate();
+    const [registerNumber, setRegisterNumber] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -38,6 +41,24 @@ export function StudentLogin() {
                 if (role && role !== 'student') {
                     await authService.logoutUser();
                     throw new Error('Please use the Mentor login page.');
+                }
+
+                // Verify Register Number
+                const { data: profile } = await supabase
+                    .from('students')
+                    .select('register_number')
+                    .eq('user_id', data.user.id)
+                    .single();
+
+                if (!profile) {
+                    // Should not happen for valid student, but safeguard
+                    await authService.logoutUser();
+                    throw new Error('Student profile not found.');
+                }
+
+                if (profile.register_number !== registerNumber) {
+                    await authService.logoutUser();
+                    throw new Error('Register number does not match our records.');
                 }
 
                 navigate('/student/dashboard');
@@ -99,10 +120,21 @@ export function StudentLogin() {
                                     <p className="text-sm font-medium">{error}</p>
                                 </div>
                             )}
+
+                            <Input
+                                label="Register Number"
+                                placeholder="621522243..."
+                                value={registerNumber}
+                                onChange={(e) => setRegisterNumber(e.target.value)}
+                                icon={<ShieldCheck className="text-primary/60 w-5 h-5" />}
+                                required
+                                className="bg-white/50 border-white/60 focus:bg-white rounded-2xl h-14"
+                            />
+
                             <Input
                                 label="Email Address"
                                 type="email"
-                                placeholder="name@college.edu"
+                                placeholder="student@gmail.com"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 icon={<Mail className="text-primary/60 w-5 h-5" />}

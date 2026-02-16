@@ -9,6 +9,36 @@ export type Json =
 export interface Database {
     public: {
         Tables: {
+            announcements: {
+                Row: {
+                    id: string
+                    title: string
+                    content: string
+                    type: 'general' | 'alert' | 'event'
+                    is_active: boolean
+                    created_by: string
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    title: string
+                    content: string
+                    type?: 'general' | 'alert' | 'event'
+                    is_active?: boolean
+                    created_by: string
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    title?: string
+                    content?: string
+                    type?: 'general' | 'alert' | 'event'
+                    is_active?: boolean
+                    created_by?: string
+                    created_at?: string
+                }
+                Relationships: []
+            },
             user_roles: {
                 Row: {
                     id: string
@@ -67,6 +97,7 @@ export interface Database {
                     full_name: string
                     email: string
                     department_id: string | null
+                    register_number: string | null
                     level: 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert'
                     xp: number
                     readiness_score: number
@@ -84,6 +115,7 @@ export interface Database {
                     full_name: string
                     email: string
                     department_id?: string | null
+                    register_number?: string | null
                     level?: 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert'
                     xp?: number
                     readiness_score?: number
@@ -101,6 +133,7 @@ export interface Database {
                     full_name?: string
                     email?: string
                     department_id?: string | null
+                    register_number?: string | null
                     level?: 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert'
                     xp?: number
                     readiness_score?: number
@@ -176,7 +209,9 @@ export interface Database {
                     estimated_hours: number | null
                     thumbnail_url: string | null
                     category: string | null
+                    color: string | null
                     is_published: boolean
+                    is_featured: boolean
                     created_by: string | null
                     created_at: string
                 }
@@ -189,7 +224,9 @@ export interface Database {
                     estimated_hours?: number | null
                     thumbnail_url?: string | null
                     category?: string | null
+                    color?: string | null
                     is_published?: boolean
+                    is_featured?: boolean
                     created_by?: string | null
                     created_at?: string
                 }
@@ -202,7 +239,9 @@ export interface Database {
                     estimated_hours?: number | null
                     thumbnail_url?: string | null
                     category?: string | null
+                    color?: string | null
                     is_published?: boolean
+                    is_featured?: boolean
                     created_by?: string | null
                     created_at?: string
                 }
@@ -240,6 +279,7 @@ export interface Database {
                     id: string
                     module_id: string
                     title: string
+                    description: string | null
                     video_url: string | null
                     duration_mins: number | null
                     content_markdown: string | null
@@ -251,6 +291,7 @@ export interface Database {
                     id?: string
                     module_id: string
                     title: string
+                    description?: string | null
                     video_url?: string | null
                     duration_mins?: number | null
                     content_markdown?: string | null
@@ -262,6 +303,7 @@ export interface Database {
                     id?: string
                     module_id?: string
                     title?: string
+                    description?: string | null
                     video_url?: string | null
                     duration_mins?: number | null
                     content_markdown?: string | null
@@ -332,6 +374,7 @@ export interface Database {
                 Row: {
                     id: string
                     related_module_id: string | null
+                    lesson_id: string | null
                     title: string
                     passing_score: number
                     time_limit_mins: number
@@ -340,6 +383,7 @@ export interface Database {
                 Insert: {
                     id?: string
                     related_module_id?: string | null
+                    lesson_id?: string | null
                     title: string
                     passing_score?: number
                     time_limit_mins?: number
@@ -348,6 +392,7 @@ export interface Database {
                 Update: {
                     id?: string
                     related_module_id?: string | null
+                    lesson_id?: string | null
                     title?: string
                     passing_score?: number
                     time_limit_mins?: number

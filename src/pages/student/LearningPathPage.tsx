@@ -1,37 +1,62 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, Code2, Sparkles, Brain, Cpu, Binary, Calculator, BarChart3, Network, Database, GitBranch, Lightbulb, type LucideIcon } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { BookOpen, Sparkles } from 'lucide-react';
 import { CourseCard } from '../../components/courses/CourseCard';
-import { LanguageCard } from '../../components/coding/LanguageCard';
-import { coursesData } from '../../data/coursesData';
+import { useAuth } from '../../contexts/AuthContext';
+import { roadmapService } from '../../services/RoadmapService';
+import type { Database } from '../../types/database.types';
 
-const iconMap: Record<string, LucideIcon> = {
-    Binary, Calculator, BarChart3, Brain, Network, Database, GitBranch, Lightbulb
-};
-
-// Mock Data for Coding Progress (Moving from CodingHomePage)
-const pythonProgress = {
-    language: 'Python' as const,
-    progress: 72,
-    conceptsCompleted: 45,
-    totalConcepts: 70,
-    performanceLevel: 'Bright' as const,
-    streakDays: 12,
-    lastActivity: new Date('2026-02-04'),
-};
-
-const javaProgress = {
-    language: 'Java' as const,
-    progress: 30,
-    conceptsCompleted: 18,
-    totalConcepts: 60,
-    performanceLevel: 'Average' as const,
-    streakDays: 5,
-    lastActivity: new Date('2026-02-03'),
-};
+// Define Course Type derived from DB
+type CourseRow = Database['public']['Tables']['courses']['Row'];
 
 export const LearningPathPage: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<'coding' | 'courses'>('coding');
+    const { profile } = useAuth();
+    const [courses, setCourses] = useState<CourseRow[]>([]);
+    const [loading, setLoading] = useState(false);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [enrollments, setEnrollments] = useState<any[]>([]);
+
+    useEffect(() => {
+        loadRoadmaps();
+    }, []);
+
+    useEffect(() => {
+        if (profile && 'id' in profile) {
+            loadEnrollments(profile.id);
+        }
+    }, [profile]);
+
+    const loadRoadmaps = async () => {
+        setLoading(true);
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const data = await roadmapService.getRoadmaps() as any[];
+            setCourses(data || []);
+        } catch (error) {
+            console.error('Failed to load roadmaps:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const loadEnrollments = async (userId: string) => {
+        try {
+            const data = await roadmapService.getUserEnrollments(userId);
+            setEnrollments(data || []);
+        } catch (error) {
+            console.error('Failed to load enrollments:', error);
+        }
+    };
+
+    const getCourseProgress = (courseId: string) => {
+        const enrollment = enrollments.find(e => e.course_id === courseId);
+        return enrollment ? (enrollment.progress_percent || 0) : 0;
+    };
+
+    const isCourseCompleted = (courseId: string) => {
+        const enrollment = enrollments.find(e => e.course_id === courseId);
+        return enrollment?.status === 'completed';
+    };
 
     return (
         <div className="min-h-screen p-4 md:p-8 space-y-8 relative overflow-hidden">
@@ -71,104 +96,42 @@ export const LearningPathPage: React.FC = () => {
                 </motion.p>
             </div>
 
-            {/* Path Switching Tabs */}
-            <div className="flex justify-center mb-12">
-                <div className="flex bg-white/40 backdrop-blur-md p-1.5 rounded-2xl border border-white/50 shadow-lg relative">
-                    {/* Sliding Background */}
-                    <motion.div
-                        layoutId="activeTab"
-                        className={`absolute top-1.5 bottom-1.5 rounded-xl bg-white shadow-md z-0 transition-colors duration-300 ${activeTab === 'coding' ? 'left-1.5 w-[calc(50%-6px)]' : 'left-[calc(50%+3px)] w-[calc(50%-6px)]'
-                            }`}
-                        initial={false}
-                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                    />
-
-                    <button
-                        onClick={() => setActiveTab('coding')}
-                        className={`relative z-10 px-8 py-3 rounded-xl flex items-center gap-2 font-semibold transition-colors duration-300 ${activeTab === 'coding' ? 'text-primary' : 'text-gray-500 hover:text-gray-700'
-                            }`}
-                    >
-                        <Code2 className="w-5 h-5" />
-                        Coding
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('courses')}
-                        className={`relative z-10 px-8 py-3 rounded-xl flex items-center gap-2 font-semibold transition-colors duration-300 ${activeTab === 'courses' ? 'text-accent' : 'text-gray-500 hover:text-gray-700'
-                            }`}
-                    >
-                        <BookOpen className="w-5 h-5" />
-                        Courses
-                    </button>
-                </div>
-            </div>
-
             {/* Content Area */}
-            <AnimatePresence mode="wait">
-                {activeTab === 'coding' ? (
-                    <motion.div
-                        key="coding"
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 20 }}
-                        transition={{ duration: 0.3 }}
-                        className="max-w-6xl mx-auto"
-                    >
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="p-3 bg-primary/10 rounded-xl">
-                                <Cpu className="w-6 h-6 text-primary" />
-                            </div>
-                            <div>
-                                <h2 className="text-2xl font-bold text-gray-900">Coding Mastery</h2>
-                                <p className="text-gray-500 text-sm">Practice essential programming languages</p>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <LanguageCard
-                                {...pythonProgress}
-                                link="/student/coding/python"
-                            />
-                            <LanguageCard
-                                {...javaProgress}
-                                link="/student/coding/java"
-                            />
-                        </div>
-                    </motion.div>
+            <div className="max-w-7xl mx-auto">
+                {loading ? (
+                    <div className="flex justify-center py-20">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                    </div>
+                ) : courses.length === 0 ? (
+                    <div className="text-center py-12 text-gray-500">
+                        No courses available at the moment. Check back later!
+                    </div>
                 ) : (
-                    <motion.div
-                        key="courses"
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
-                        transition={{ duration: 0.3 }}
-                        className="max-w-7xl mx-auto"
-                    >
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="p-3 bg-accent/10 rounded-xl">
-                                <Brain className="w-6 h-6 text-accent" />
-                            </div>
-                            <div>
-                                <h2 className="text-2xl font-bold text-gray-900">Specialized Courses</h2>
-                                <p className="text-gray-500 text-sm">Deep dive into AI, Data Science, and more</p>
-                            </div>
-                        </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {courses.map((course) => {
+                            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                            const IconComponent = BookOpen;
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {coursesData.map((course) => {
-                                const IconComponent = (course.icon && iconMap[course.icon]) ? iconMap[course.icon] : BookOpen;
-                                return (
-                                    <CourseCard
-                                        key={course.id}
-                                        {...course}
-                                        icon={IconComponent}
-                                    />
-                                );
-                            })}
-                        </div>
-                    </motion.div>
+                            return (
+                                <CourseCard
+                                    key={course.id}
+                                    id={course.id}
+                                    name={course.title}
+                                    slug={course.slug}
+                                    description={course.description}
+                                    difficulty={course.difficulty as any}
+                                    estimatedHours={course.estimated_hours || 0}
+                                    progress={getCourseProgress(course.id)}
+                                    icon={IconComponent}
+                                    thumbnailUrl={course.thumbnail_url}
+                                    category={course.category || 'Roadmap'}
+                                    certificateEarned={isCourseCompleted(course.id)}
+                                />
+                            );
+                        })}
+                    </div>
                 )}
-            </AnimatePresence>
+            </div>
         </div>
     );
 };
-
