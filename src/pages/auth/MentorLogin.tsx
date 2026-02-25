@@ -29,13 +29,6 @@ export function MentorLogin() {
         setLoading(true);
         setError(null);
 
-        // Domain Check
-        if (!email.toLowerCase().endsWith('@mahendracollege.com')) {
-            setError('Please use your official organization email (@mahendracollege.com).');
-            setLoading(false);
-            return;
-        }
-
         try {
             const data = await authService.loginUser(email, password);
 

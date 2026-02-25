@@ -97,6 +97,16 @@ export const cmsService = {
     },
 
     // Modules (Phases)
+    async getModule(id: string) {
+        const { data, error } = await supabase
+            .from('course_modules')
+            .select('*')
+            .eq('id', id)
+            .single();
+        if (error) throw error;
+        return data as CourseModule;
+    },
+
     async getModules(courseId: string) {
         const { data, error } = await supabase
             .from('course_modules')

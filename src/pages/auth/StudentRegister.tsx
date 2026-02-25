@@ -41,6 +41,14 @@ export function StudentRegister() {
         }
 
         try {
+            // Check if user already exists
+            const userExists = await authService.checkUserExists(formData.email);
+            if (userExists) {
+                setError("User already registered. Please sign in.");
+                setIsSubmitting(false);
+                return;
+            }
+
             await authService.registerStudent(
                 formData.email,
                 formData.password,
@@ -113,9 +121,19 @@ export function StudentRegister() {
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {error && (
-                            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl flex items-center gap-3 animate-shake">
-                                <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                                <p className="text-sm font-medium">{error}</p>
+                            <div className={`border px-4 py-3 rounded-xl flex items-start gap-3 animate-shake ${error.includes('already registered')
+                                ? 'bg-blue-50 border-blue-200 text-blue-800'
+                                : 'bg-red-50 border-red-200 text-red-600'
+                                }`}>
+                                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                                <div className="flex-1">
+                                    <p className="text-sm font-medium">{error}</p>
+                                    {error.includes('already registered') && (
+                                        <Link to="/login" className="text-sm font-bold underline mt-1 inline-block hover:text-blue-600">
+                                            Click here to Sign In instead
+                                        </Link>
+                                    )}
+                                </div>
                             </div>
                         )}
                         <div className="space-y-5">

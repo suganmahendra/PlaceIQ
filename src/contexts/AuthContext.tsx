@@ -49,7 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     .insert({
                         user_id: user.id,
                         full_name: fullName,
-                        expertise: user.user_metadata?.expertise || 'AI Expert',
+                        expertise: user.user_metadata?.expertise ? [user.user_metadata.expertise] : ['AI Expert'],
                     })
                     .select()
                     .single();

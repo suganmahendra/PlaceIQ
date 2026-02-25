@@ -47,11 +47,6 @@ export const authService = {
      * Register a new mentor
      */
     async registerMentor(email: string, password: string, fullName: string, expertise: string) {
-        // Enforce Organization Email Domain
-        if (!email.toLowerCase().endsWith('@mahendracollege.com')) {
-            throw new Error('Mentors must use an official @mahendracollege.com email address.');
-        }
-
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
@@ -239,6 +234,23 @@ export const authService = {
 
         if (error || !data) return null;
         return data.role as UserRole;
+    },
+
+    /**
+     * Check if user exists (RPC)
+     */
+    async checkUserExists(email: string) {
+        // @ts-expect-error - RPC function is not yet in generated types
+        const { data, error } = await supabase.rpc('check_user_exists', {
+            email_to_check: email
+        });
+
+        // If RPC is missing or fails, default to false (let standard flow handle it)
+        if (error) {
+            console.warn('Error checking user existence:', error);
+            return false;
+        }
+        return data;
     },
 
     /**

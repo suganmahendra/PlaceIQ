@@ -24,6 +24,7 @@ import { ProgressBar } from '../../components/ui/ProgressBar';
 import { ProgressRing } from '../../components/ui/ProgressRing';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
+import { AppViewer } from '../../components/ui/AppViewer';
 import { cn } from '../../lib/utils';
 import type { Database } from '../../types/database.types';
 
@@ -124,6 +125,12 @@ export function CourseDetailPage() {
                 const updatedEnrollment = await roadmapService.checkEnrollment(profile.id, course.id);
                 setEnrollment(updatedEnrollment);
             }
+
+            // Route to quiz if available
+            if (quiz && quiz.lesson_id === lessonId) {
+                navigate(`/student/quiz?id=${quiz.id}`);
+            }
+
         } catch (error) {
             console.error('Failed to mark lesson as complete:', error);
         } finally {
@@ -446,46 +453,41 @@ export function CourseDetailPage() {
                             </button>
                         </div>
 
-                        {/* Player Frame */}
-                        <div className="aspect-video bg-black relative group">
-                            <VideoPlayer
-                                youtubeUrl={selectedVideo.video_url || `https://www.youtube.com/watch?v=dQw4w9WgXcQ`}
-                                title={selectedVideo.title}
-                            />
-                        </div>
+                        {/* Player Frame (if video URL exists) */}
+                        {selectedVideo.video_url && (
+                            <div className="aspect-video bg-black relative group">
+                                <VideoPlayer
+                                    youtubeUrl={selectedVideo.video_url}
+                                    title={selectedVideo.title}
+                                />
+                            </div>
+                        )}
 
-                        {/* Content Area */}
-                        <div className="p-8 md:p-10 bg-white">
-                            <div className="flex flex-col md:flex-row gap-8 items-start">
-                                <div className="flex-1 space-y-4">
-                                    <h4 className="text-2xl font-black text-gray-900">Lesson Overview</h4>
-                                    <p className="text-gray-600 leading-relaxed text-lg whitespace-pre-line">
-                                        {selectedVideo.content_markdown || "In this lesson, we cover advanced concepts related to this topic. Follow along with the code-along sections to maximize your understanding."}
-                                    </p>
-                                </div>
-                                <div className="w-full md:w-72 flex flex-col gap-3">
+                        {/* Content Area - Full width for reading */}
+                        <div className="p-8 md:p-12 bg-white flex flex-col items-center">
+                            <div className="w-full max-w-4xl mx-auto mb-16">
+                                <AppViewer initialContent={selectedVideo.content_markdown || ''} />
+                            </div>
+
+                            {/* Action Buttons at the bottom */}
+                            <div className="w-full max-w-2xl mx-auto flex flex-col sm:flex-row gap-4 justify-center items-center pt-8 border-t border-gray-100">
+                                <Button
+                                    className="h-14 px-8 font-black rounded-2xl text-lg shadow-xl shadow-primary/20 w-full sm:w-auto"
+                                    onClick={() => handleMarkComplete(selectedVideo.id)}
+                                    isLoading={isCompleting}
+                                    disabled={isLessonCompleted(selectedVideo.id)}
+                                >
+                                    {isLessonCompleted(selectedVideo.id) ? 'Lesson Completed ✓' : 'Mark as Complete'}
+                                </Button>
+
+                                {isLessonCompleted(selectedVideo.id) && quiz && (
                                     <Button
-                                        className="h-14 font-black rounded-2xl text-lg shadow-xl shadow-primary/20"
-                                        onClick={() => handleMarkComplete(selectedVideo.id)}
-                                        isLoading={isCompleting}
-                                        disabled={isLessonCompleted(selectedVideo.id)}
+                                        className="h-14 px-8 font-black rounded-2xl text-lg bg-gradient-to-r from-yellow-400 to-orange-500 text-white shadow-xl shadow-orange-200 hover:scale-[1.02] transition-transform animate-pulse w-full sm:w-auto"
+                                        onClick={() => navigate(`/student/quiz?id=${quiz.id}`)}
                                     >
-                                        {isLessonCompleted(selectedVideo.id) ? 'Already Completed' : 'Mark as Complete'}
+                                        Take Quiz: {quiz.title}
                                     </Button>
-
-                                    {isLessonCompleted(selectedVideo.id) && quiz && (
-                                        <Button
-                                            className="h-14 font-black rounded-2xl text-lg bg-gradient-to-r from-yellow-400 to-orange-500 text-white shadow-xl shadow-orange-200 mt-2 hover:scale-[1.02] transition-transform animate-pulse"
-                                            onClick={() => navigate(`/student/quiz?id=${quiz.id}`)}
-                                        >
-                                            Start Quiz: {quiz.title}
-                                        </Button>
-                                    )}
-
-                                    <Button variant="outline" className="h-14 font-bold rounded-2xl border-gray-200 hover:bg-gray-50">
-                                        Download Code Files
-                                    </Button>
-                                </div>
+                                )}
                             </div>
                         </div>
                     </div>

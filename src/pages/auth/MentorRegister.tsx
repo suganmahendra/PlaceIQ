@@ -40,13 +40,6 @@ export function MentorRegister() {
             return;
         }
 
-        // Validate email domain for mentors
-        if (!formData.email.trim().toLowerCase().endsWith('@mahendracollege.com')) {
-            setError("Mentor registration is restricted to authorized staff only (@mahendracollege.com).");
-            setIsSubmitting(false);
-            return;
-        }
-
         try {
             await authService.registerMentor(
                 formData.email,

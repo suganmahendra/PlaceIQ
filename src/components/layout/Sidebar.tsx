@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '../../lib/utils';
+import { useAuth } from '../../contexts/AuthContext';
 import {
     LayoutDashboard,
     BookOpen,
@@ -13,9 +14,10 @@ import {
     ChevronRight,
     BrainCircuit,
     Bell,
+    Settings,
 } from 'lucide-react';
 
-const sidebarLinks = [
+const studentLinks = [
     { name: 'Dashboard', path: '/student/dashboard', icon: LayoutDashboard },
     { name: 'Learning Path', path: '/student/learning', icon: BookOpen },
     { name: 'Practice & Quiz', path: '/student/quiz', icon: Gamepad2 },
@@ -24,6 +26,11 @@ const sidebarLinks = [
     { name: 'Announcements', path: '/student/announcements', icon: Bell },
     { name: 'Placements', path: '/student/placements', icon: Briefcase },
     { name: 'Profile', path: '/student/profile', icon: User },
+];
+
+const mentorLinks = [
+    { name: 'Dashboard', path: '/mentor/dashboard', icon: LayoutDashboard },
+    { name: 'CMS & Roadmaps', path: '/mentor/cms', icon: Settings },
 ];
 
 interface SidebarProps {
@@ -35,6 +42,10 @@ interface SidebarProps {
 
 export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: SidebarProps) {
     const location = useLocation();
+    const { role } = useAuth();
+
+    // Determine which links to show based on the user's role
+    const sidebarLinks = role === 'mentor' ? mentorLinks : studentLinks;
 
     return (
         <>

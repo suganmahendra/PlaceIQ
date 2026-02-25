@@ -4,14 +4,13 @@ import { ArrowLeft, Plus, Video, Code, FileText, Trash2, Edit2 } from 'lucide-re
 import { cmsService, type CourseLesson } from '../../../services/cmsService';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
+import { AppEditor } from '../../../components/ui/AppEditor';
 
 export function PhaseManager() {
     const { moduleId } = useParams<{ moduleId: string }>();
     const navigate = useNavigate();
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    // const [module, setModule] = useState<CourseModule | null>(null);
+    const [module, setModule] = useState<any>(null);
     const [lessons, setLessons] = useState<CourseLesson[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -32,10 +31,14 @@ export function PhaseManager() {
 
     const loadModuleData = async (id: string) => {
         try {
-            const lessonsData = await cmsService.getLessons(id);
+            const [moduleData, lessonsData] = await Promise.all([
+                cmsService.getModule(id),
+                cmsService.getLessons(id)
+            ]);
+            setModule(moduleData);
             setLessons(lessonsData || []);
         } catch (error) {
-            console.error('Failed to load phase content:', error);
+            console.error('Failed to load phase/topic content:', error);
         } finally {
             setLoading(false);
         }
@@ -110,7 +113,9 @@ export function PhaseManager() {
 
             <div className="flex items-center justify-between bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Manage Topics</h1>
+                    <h1 className="text-2xl font-bold text-gray-900">
+                        Manage Topics {module ? `for: ${module.title}` : ''}
+                    </h1>
                     <p className="text-gray-500">Add videos, notes, and code snippets for this phase.</p>
                 </div>
                 <Button onClick={() => {
@@ -203,32 +208,8 @@ function TopicForm({ form, setForm, onSave, onCancel }: {
     onSave: (snippets?: any) => void,
     onCancel: () => void
 }) {
-    // Initialize jsonText safely
-    const [jsonText, setJsonText] = useState(form.code_snippets ? JSON.stringify(form.code_snippets, null, 2) : '');
-    const [jsonError, setJsonError] = useState<string | null>(null);
-
-    // Update jsonText when form.code_snippets changes (e.g. switching between different edits)
-    // Actually, we shouldn't do this inside the same component instance unless key changes, which it does.
-    useEffect(() => {
-        setJsonText(form.code_snippets ? JSON.stringify(form.code_snippets, null, 2) : '');
-    }, [form.code_snippets]); // This might cause loop if we update form from jsonText, but we don't.
-
     const handleSaveClick = () => {
-        let snippetData = form.code_snippets;
-
-        if (jsonText.trim()) {
-            try {
-                const parsed = JSON.parse(jsonText);
-                snippetData = parsed;
-            } catch (error) {
-                setJsonError("Invalid JSON format");
-                return;
-            }
-        } else {
-            snippetData = null;
-        }
-
-        onSave(snippetData);
+        onSave(form.code_snippets); // Pass existing snippets unmodified as they are now handled by text blocks
     };
 
     return (
@@ -244,7 +225,7 @@ function TopicForm({ form, setForm, onSave, onCancel }: {
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Video URL (YouTube/MP4)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Video URL (Main Video - Optional)</label>
                 <div className="relative">
                     <Video className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <Input
@@ -257,34 +238,17 @@ function TopicForm({ form, setForm, onSave, onCancel }: {
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Content (Markdown)</label>
-                <textarea
-                    className="w-full h-32 rounded-xl border border-gray-300 p-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none font-mono"
-                    value={form.content_markdown || ''}
-                    onChange={e => setForm({ ...form, content_markdown: e.target.value })}
-                    placeholder="# Topic Overview\n\nExplanation goes here..."
+                <div className="flex justify-between items-end mb-1">
+                    <label className="block text-sm font-medium text-gray-700">Course Content</label>
+                    <span className="text-xs text-gray-400">Type '/' to add code snippets, images, and formatting</span>
+                </div>
+                <AppEditor
+                    initialContent={form.content_markdown || ''}
+                    onChange={(content) => setForm({ ...form, content_markdown: content })}
                 />
             </div>
 
-            <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Code Snippets (JSON)</label>
-                <textarea
-                    className={`w-full h-32 rounded-xl border ${jsonError ? 'border-red-500' : 'border-gray-300'} p-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none font-mono bg-gray-50`}
-                    value={jsonText}
-                    onChange={e => {
-                        setJsonText(e.target.value);
-                        setJsonError(null);
-                    }}
-                    placeholder='[&#10;  {&#10;    "language": "python",&#10;    "code": "print(\"Hello\")"&#10;  }&#10;]'
-                />
-                {jsonError ? (
-                    <p className="text-xs text-red-500 mt-1">{jsonError}</p>
-                ) : (
-                    <p className="text-xs text-gray-400 mt-1">Optional: Paste valid JSON array of snippets.</p>
-                )}
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-2 pt-4 mt-2 border-t border-gray-100">
                 <Button variant="ghost" onClick={onCancel}>Cancel</Button>
                 <Button onClick={handleSaveClick} className="bg-primary text-white">Save Topic</Button>
             </div>
