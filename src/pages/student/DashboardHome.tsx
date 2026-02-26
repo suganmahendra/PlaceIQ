@@ -73,7 +73,7 @@ export function DashboardHome() {
     return (
         <div className="space-y-8">
             {/* Welcome Banner */}
-            <div className="relative rounded-3xl bg-gradient-to-r from-primary to-accent p-8 md:p-12 text-white overflow-hidden shadow-2xl animate-in slide-in-from-top-4 duration-500">
+            <div className="relative rounded-3xl bg-purple-700 p-8 md:p-12 text-white overflow-hidden shadow-2xl animate-in slide-in-from-top-4 duration-500">
                 <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full blur-3xl translate-x-10 -translate-y-10 animate-pulse"></div>
                 <div className="absolute bottom-0 left-0 w-64 h-64 bg-black/10 rounded-full blur-3xl -translate-x-10 translate-y-10"></div>
 

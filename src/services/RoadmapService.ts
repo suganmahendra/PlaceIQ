@@ -27,6 +27,20 @@ export const roadmapService = {
     },
 
     /**
+     * Fetch a single roadmap by ID (without deep relationships)
+     */
+    async getRoadmapById(id: string) {
+        const { data, error } = await supabase
+            .from('courses')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (error) throw error;
+        return data;
+    },
+
+    /**
      * Fetch a single roadmap by slug with all content
      */
     async getRoadmapBySlug(slug: string) {
@@ -80,6 +94,25 @@ export const roadmapService = {
     },
 
     /**
+     * Get active enrollments complete with attached course metadata
+     */
+    async getActiveEnrollmentsWithDetails(userId: string) {
+        const { data, error } = await supabase
+            .from('enrollments')
+            // Using a join to instantly pull title, slug, duration, category, etc
+            .select(`
+                *,
+                courses (*)
+            `)
+            .eq('student_id', userId)
+            .eq('status', 'active')
+            .order('enrolled_at', { ascending: false });
+
+        if (error) throw error;
+        return data;
+    },
+
+    /**
      * Enroll a student in a course
      */
     async enrollStudent(studentId: string, courseId: string) {
@@ -127,7 +160,7 @@ export const roadmapService = {
     },
 
     /**
-     * Update lesson progress
+     * Update lesson progress and handle XP
      */
     async updateLessonProgress(
         enrollmentId: string,
@@ -135,6 +168,16 @@ export const roadmapService = {
         watchTimeSeconds: number,
         isCompleted: boolean = false
     ) {
+        // Check previous state to prevent infinite XP farming on same lesson
+        const { data: previousState } = await supabase
+            .from('lesson_progress')
+            .select('is_completed')
+            .eq('enrollment_id', enrollmentId)
+            .eq('lesson_id', lessonId)
+            .maybeSingle();
+
+        const wasAlreadyCompleted = previousState?.is_completed === true;
+
         const { data, error } = await supabase
             .from('lesson_progress')
             .upsert({
@@ -151,9 +194,85 @@ export const roadmapService = {
 
         if (error) throw error;
 
-        // If completed, check if we need to update course overall progress
-        if (isCompleted) {
+        if (isCompleted && !wasAlreadyCompleted) {
             await this.recalculateCourseProgress(enrollmentId);
+
+            // Fetch student_id from enrollment
+            const { data: enrollment } = await supabase
+                .from('enrollments')
+                .select('student_id')
+                .eq('id', enrollmentId)
+                .single();
+
+            if (enrollment?.student_id) {
+                const XP_PER_LESSON = 10;
+
+                // Helper: XP → level label (matches DB enum)
+                const getLevelFromXp = (xp: number) => {
+                    if (xp >= 150) return 'Advanced' as const;
+                    if (xp >= 50) return 'Intermediate' as const;
+                    return 'Beginner' as const;
+                };
+
+                // Try RPC first; fall back to direct update if RPC doesn't exist
+                let newXp = XP_PER_LESSON;
+                const { error: rpcError } = await supabase.rpc('increment_xp', {
+                    user_id: enrollment.student_id,
+                    amount: XP_PER_LESSON
+                });
+
+                if (rpcError) {
+                    // Fallback: fetch current XP then increment manually
+                    const { data: student } = await supabase
+                        .from('students')
+                        .select('xp')
+                        .eq('id', enrollment.student_id)
+                        .single();
+
+                    const currentXp = student?.xp ?? 0;
+                    newXp = currentXp + XP_PER_LESSON;
+                    const { error: updateError } = await supabase
+                        .from('students')
+                        .update({ xp: newXp, level: getLevelFromXp(newXp) })
+                        .eq('id', enrollment.student_id);
+
+                    if (updateError) {
+                        console.warn('[XP] students update failed:', updateError.message, updateError.details);
+                    } else {
+                        console.log(`[XP] Awarded ${XP_PER_LESSON} XP → student ${enrollment.student_id}, total: ${newXp}`);
+                    }
+                } else {
+                    // RPC succeeded — re-read new XP to recalc level
+                    const { data: updatedStudent } = await supabase
+                        .from('students')
+                        .select('xp')
+                        .eq('id', enrollment.student_id)
+                        .single();
+                    newXp = updatedStudent?.xp ?? XP_PER_LESSON;
+                    const { error: levelError } = await supabase
+                        .from('students')
+                        .update({ level: getLevelFromXp(newXp) })
+                        .eq('id', enrollment.student_id);
+                    if (levelError) {
+                        console.warn('[XP] level update failed:', levelError.message);
+                    }
+                    console.log(`[XP] RPC awarded XP → student ${enrollment.student_id}, total: ${newXp}`);
+                }
+
+                // Log to xp_history — non-blocking, 403 (no RLS policy) should not stop XP from being saved
+                try {
+                    const { error: historyError } = await supabase.from('xp_history').insert({
+                        student_id: enrollment.student_id,
+                        amount: XP_PER_LESSON,
+                        reason: 'Lesson Completed'
+                    });
+                    if (historyError) {
+                        console.warn('[XP] xp_history log failed (add RLS INSERT policy):', historyError.message);
+                    }
+                } catch {
+                    // Non-critical — history table inaccessible, XP was still saved above
+                }
+            }
         }
 
         return data;

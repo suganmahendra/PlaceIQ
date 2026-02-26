@@ -4,7 +4,7 @@ import { Badge } from '../../components/ui/Badge';
 import { ProgressRing } from '../../components/ui/ProgressRing';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
-import { Button } from '../../components/ui/Button';
+
 
 export function ProfilePage() {
     const { profile, refreshProfile } = useAuth();
@@ -114,188 +114,202 @@ export function ProfilePage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50/50">
-            <div className="w-full">
-                {/* Cover Background - Full Width */}
-                <div className="h-64 bg-gradient-to-r from-violet-600 to-indigo-600 relative">
-                    <div className="absolute inset-0 bg-black/10"></div>
+        <div className="min-h-screen bg-gray-50">
+            {/* ─── Banner ────────────────────────────────────────────── */}
+            <div className="relative h-40 sm:h-48 bg-gradient-to-r from-violet-600 to-indigo-600">
+                {/* Edit / Save Actions — always top-right inside banner */}
+                <div className="absolute top-4 right-4 z-10 flex gap-2">
+                    {isEditing ? (
+                        <>
+                            <button
+                                onClick={() => setIsEditing(false)}
+                                disabled={loading}
+                                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/20 hover:bg-white/30 text-white text-sm font-semibold transition-colors"
+                            >
+                                <X className="w-4 h-4" /> Cancel
+                            </button>
+                            <button
+                                onClick={handleSave}
+                                disabled={loading}
+                                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white text-violet-700 text-sm font-semibold hover:bg-gray-100 transition-colors disabled:opacity-60"
+                            >
+                                <Save className="w-4 h-4" /> {loading ? 'Saving…' : 'Save'}
+                            </button>
+                        </>
+                    ) : (
+                        <button
+                            onClick={() => setIsEditing(true)}
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/20 hover:bg-white/30 text-white text-sm font-semibold transition-colors backdrop-blur-sm"
+                        >
+                            <Settings className="w-4 h-4" /> Edit Profile
+                        </button>
+                    )}
+                </div>
+            </div>
 
-                    {/* Header Actions - Absolute positioned on cover or top */}
-                    <div className="absolute top-6 right-6 z-10">
-                        {isEditing ? (
-                            <div className="flex gap-3">
-                                <Button variant="secondary" onClick={() => setIsEditing(false)} disabled={loading}>
-                                    <X className="w-4 h-4 mr-2" /> Cancel
-                                </Button>
-                                <Button onClick={handleSave} disabled={loading} className="bg-white text-primary hover:bg-gray-100 border-none">
-                                    <Save className="w-4 h-4 mr-2" /> {loading ? 'Saving...' : 'Save Changes'}
-                                </Button>
+            {/* ─── Profile Card — avatar overlaps banner bottom by 48px ── */}
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+                {/* Avatar row */}
+                <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4 mt-[-48px] mb-4">
+                    {/* Avatar */}
+                    <div className="relative group flex-shrink-0">
+                        <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-white p-1 shadow-lg border-4 border-white">
+                            <div className="w-full h-full rounded-xl bg-gray-100 flex items-center justify-center overflow-hidden relative">
+                                {profile.avatar_url ? (
+                                    <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full object-cover" />
+                                ) : (
+                                    <User className="w-10 h-10 text-gray-400" />
+                                )}
+                                <div
+                                    className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer rounded-xl"
+                                    onClick={() => fileInputRef.current?.click()}
+                                >
+                                    <Camera className="w-6 h-6 text-white" />
+                                </div>
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    className="hidden"
+                                    accept="image/*"
+                                    onChange={handleImageUpload}
+                                    disabled={uploading}
+                                />
+                                {uploading && (
+                                    <div className="absolute inset-0 flex items-center justify-center bg-white/60 rounded-xl">
+                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-violet-600" />
+                                    </div>
+                                )}
                             </div>
-                        ) : (
-                            <Button onClick={() => setIsEditing(true)} className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white border-white/40">
-                                <Settings className="w-4 h-4 mr-2" /> Edit Profile
-                            </Button>
-                        )}
+                        </div>
+                    </div>
+
+                    {/* Name / email / badges — pushed below the banner overlap on mobile */}
+                    <div className="flex-1 min-w-0 pt-14 sm:pt-3 text-center sm:text-left">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 flex-wrap">
+                            <div className="min-w-0">
+                                {isEditing ? (
+                                    <input
+                                        type="text"
+                                        value={formData.full_name}
+                                        onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                                        className="text-2xl font-bold text-gray-900 border-b-2 border-violet-300 focus:border-violet-600 outline-none bg-transparent w-full sm:max-w-xs"
+                                    />
+                                ) : (
+                                    <h2 className="text-2xl font-bold text-gray-900 truncate">{profile.full_name}</h2>
+                                )}
+                                <div className="flex flex-wrap justify-center sm:justify-start items-center gap-x-3 gap-y-1 text-gray-500 text-sm mt-1">
+                                    <span className="flex items-center gap-1 min-w-0">
+                                        <Mail className="w-3.5 h-3.5 flex-shrink-0" />
+                                        <span className="truncate">{profile.email}</span>
+                                    </span>
+                                    <span className="hidden sm:inline text-gray-300">•</span>
+                                    <span className="flex items-center gap-1">
+                                        <School className="w-3.5 h-3.5 flex-shrink-0" />
+                                        Computer Science &amp; Engineering
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Badges */}
+                            <div className="flex flex-wrap justify-center sm:justify-end gap-2 flex-shrink-0">
+                                <Badge variant="success" size="lg">{profile.level}</Badge>
+                                <div className="flex items-center gap-1.5 bg-yellow-50 text-yellow-700 px-3 py-1 rounded-full font-bold text-sm border border-yellow-100">
+                                    <Award className="w-4 h-4" />
+                                    {profile.xp} XP
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div className="max-w-[1600px] mx-auto px-4 md:px-8 pb-12 relative">
-                    {/* Avatar Section */}
-                    <div className="absolute -top-16 left-1/2 -translate-x-1/2 md:left-8 md:translate-x-0">
-                        <div className="relative group">
-                            <div className="w-32 h-32 rounded-2xl bg-white p-1 shadow-lg">
-                                <div className="w-full h-full rounded-xl bg-gray-100 flex items-center justify-center overflow-hidden relative">
-                                    {profile.avatar_url ? (
-                                        <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full object-cover" />
-                                    ) : (
-                                        <User className="w-16 h-16 text-gray-400" />
-                                    )}
-
-                                    {/* Upload Overlay */}
-                                    <div
-                                        className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
-                                        onClick={() => fileInputRef.current?.click()}
-                                    >
-                                        <Camera className="w-8 h-8 text-white" />
-                                    </div>
-                                    <input
-                                        type="file"
-                                        ref={fileInputRef}
-                                        className="hidden"
-                                        accept="image/*"
-                                        onChange={handleImageUpload}
-                                        disabled={uploading}
-                                    />
-                                </div>
-                            </div>
-                            {uploading && (
-                                <div className="absolute inset-0 flex items-center justify-center bg-white/50 rounded-2xl">
-                                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Basic Info */}
-                    <div className="mt-4 md:mt-0 md:pl-40 pt-4 flex flex-col md:flex-row justify-between items-center md:items-start gap-4 text-center md:text-left">
-                        <div>
+                {/* ─── Content Grid ─────────────────────────────────────── */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-4">
+                    {/* Left / Main */}
+                    <div className="lg:col-span-2 space-y-5">
+                        {/* About Me */}
+                        <div className="bg-white rounded-2xl border border-gray-200 p-5">
+                            <h3 className="text-base font-bold text-gray-900 mb-3">About Me</h3>
                             {isEditing ? (
-                                <input
-                                    type="text"
-                                    value={formData.full_name}
-                                    onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                                    className="text-3xl font-bold text-gray-900 border-b-2 border-primary/20 focus:border-primary outline-none bg-transparent px-1 text-center md:text-left w-full"
+                                <textarea
+                                    value={formData.bio}
+                                    onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                                    className="w-full p-3 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 outline-none min-h-[100px] resize-none text-sm"
+                                    placeholder="Tell us about yourself…"
                                 />
                             ) : (
-                                <h2 className="text-3xl font-bold text-gray-900">{profile.full_name}</h2>
+                                <p className="text-gray-600 leading-relaxed text-sm">
+                                    {profile.bio || 'No bio added yet. Click Edit Profile to add one!'}
+                                </p>
                             )}
-                            <div className="flex flex-col md:flex-row items-center gap-2 text-gray-600 mt-2">
-                                <div className="flex items-center gap-2">
-                                    <Mail className="w-4 h-4" />
-                                    <span>{profile.email}</span>
-                                </div>
-                                <span className="hidden md:inline text-gray-300">|</span>
-                                <div className="flex items-center gap-2">
-                                    <School className="w-4 h-4" />
-                                    <span>Computer Science & Engineering</span>
-                                </div>
-                            </div>
                         </div>
 
-                        <div className="flex gap-3">
-                            <Badge variant="success" size="lg">{profile.level}</Badge>
-                            <div className="flex items-center gap-2 bg-yellow-50 text-yellow-700 px-4 py-1.5 rounded-full font-bold text-sm border border-yellow-100">
-                                <Award className="w-4 h-4" />
-                                {profile.xp} XP
+                        {/* Academic Details */}
+                        <div
+                            className="grid gap-4"
+                            style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}
+                        >
+                            <div className="bg-white p-4 rounded-xl border border-gray-200">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Hash className="w-4 h-4 text-gray-400" />
+                                    <span className="font-semibold text-gray-700 text-sm">Register Number</span>
+                                </div>
+                                <p className="text-gray-900 font-mono text-sm pl-6">{profile.register_number || 'N/A'}</p>
+                            </div>
+                            <div className="bg-white p-4 rounded-xl border border-gray-200">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Book className="w-4 h-4 text-gray-400" />
+                                    <span className="font-semibold text-gray-700 text-sm">Current Semester</span>
+                                </div>
+                                <p className="text-gray-900 text-sm pl-6">6th Semester</p>
                             </div>
                         </div>
                     </div>
 
-                    {/* Bio Section */}
-                    <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        <div className="lg:col-span-2 space-y-6">
-                            <div>
-                                <h3 className="text-lg font-bold text-gray-900 mb-3">About Me</h3>
-                                {isEditing ? (
-                                    <textarea
-                                        value={formData.bio}
-                                        onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                                        className="w-full p-4 rounded-xl border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary outline-none min-h-[120px] resize-none"
-                                        placeholder="Tell us about yourself..."
-                                    />
-                                ) : (
-                                    <p className="text-gray-600 leading-relaxed">
-                                        {profile.bio || "No bio added yet. Click edit to add a bio!"}
-                                    </p>
-                                )}
+                    {/* Right Sidebar */}
+                    <div className="space-y-5">
+                        {/* Profile Completion */}
+                        <div className="bg-white rounded-2xl border border-gray-200 p-5">
+                            <h3 className="font-bold text-gray-900 mb-4 text-sm">Profile Completion</h3>
+                            <div className="flex justify-center mb-4">
+                                <ProgressRing progress={profile.profile_completion || 30} size="lg" />
                             </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <Hash className="w-5 h-5 text-gray-400" />
-                                        <span className="font-semibold text-gray-700">Register Number</span>
-                                    </div>
-                                    <p className="text-gray-900 font-mono pl-8">{profile.register_number || 'N/A'}</p>
-                                </div>
-                                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <Book className="w-5 h-5 text-gray-400" />
-                                        <span className="font-semibold text-gray-700">Current Semester</span>
-                                    </div>
-                                    <p className="text-gray-900 pl-8">6th Semester</p>
-                                </div>
-                            </div>
+                            <p className="text-center text-xs text-gray-500">Complete your profile to unlock more features!</p>
                         </div>
 
-                        {/* Sidebar Stats */}
-                        <div className="space-y-6">
-                            <div className="bg-white rounded-2xl border border-gray-200 p-6">
-                                <h3 className="font-bold text-gray-900 mb-6">Profile Completion</h3>
-                                <div className="flex justify-center mb-6">
-                                    <ProgressRing progress={profile.profile_completion || 30} size="lg" />
-                                </div>
-                                <p className="text-center text-sm text-gray-500">
-                                    Complete your profile to unlock more features!
-                                </p>
-                            </div>
-
-                            <div className="bg-white rounded-2xl border border-gray-200 p-6">
-                                <h3 className="font-bold text-gray-900 mb-4">Social Links</h3>
-                                <div className="space-y-3">
-                                    {['Github', 'Linkedin', 'Portfolio'].map((platform) => {
-                                        const key = platform.toLowerCase() as keyof typeof formData;
-                                        return (
-                                            <div key={platform}>
-                                                <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">{platform}</label>
-                                                {isEditing ? (
-                                                    <input
-                                                        type="text"
-                                                        value={formData[key]}
-                                                        onChange={(e) => setFormData({ ...formData, [key]: e.target.value })}
-                                                        className="w-full p-2 rounded-lg border border-gray-200 text-sm focus:border-primary outline-none"
-                                                        placeholder={`Your ${platform} URL`}
-                                                    />
-                                                ) : (
-                                                    <a
-                                                        href={(formData[key] as string) || '#'}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                        className={`block w-full p-2 rounded-lg border border-gray-100 text-sm truncate ${formData[key] ? 'text-primary hover:bg-primary/5' : 'text-gray-400 cursor-not-allowed'}`}
-                                                    >
-                                                        {(formData[key] as string) || 'Not set'}
-                                                    </a>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
+                        {/* Social Links */}
+                        <div className="bg-white rounded-2xl border border-gray-200 p-5">
+                            <h3 className="font-bold text-gray-900 mb-3 text-sm">Social Links</h3>
+                            <div className="space-y-3">
+                                {(['github', 'linkedin', 'portfolio'] as const).map((platform) => (
+                                    <div key={platform}>
+                                        <label className="text-[10px] font-semibold text-gray-400 uppercase mb-1 block tracking-wider">
+                                            {platform}
+                                        </label>
+                                        {isEditing ? (
+                                            <input
+                                                type="text"
+                                                value={formData[platform]}
+                                                onChange={(e) => setFormData({ ...formData, [platform]: e.target.value })}
+                                                className="w-full p-2 rounded-lg border border-gray-200 text-sm focus:border-violet-500 outline-none"
+                                                placeholder={`Your ${platform} URL`}
+                                            />
+                                        ) : (
+                                            <a
+                                                href={formData[platform] || '#'}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className={`block w-full p-2 rounded-lg border text-sm truncate ${formData[platform] ? 'border-gray-100 text-violet-600 hover:bg-violet-50' : 'border-gray-100 text-gray-400 pointer-events-none'}`}
+                                            >
+                                                {formData[platform] || 'Not set'}
+                                            </a>
+                                        )}
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-
     );
 }

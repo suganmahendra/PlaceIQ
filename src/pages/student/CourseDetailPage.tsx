@@ -16,9 +16,11 @@ import {
     Lock,
     Sparkles
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useAuth } from '../../contexts/AuthContext';
 import { roadmapService, type RoadmapFull } from '../../services/RoadmapService';
 import { quizService, type Quiz } from '../../services/QuizService';
+import placementData from '../../data/placementMatches.json';
 import { VideoPlayer } from '../../components/ui/VideoPlayer';
 import { ProgressBar } from '../../components/ui/ProgressBar';
 import { ProgressRing } from '../../components/ui/ProgressRing';
@@ -35,7 +37,7 @@ type Lesson = Database['public']['Tables']['course_lessons']['Row'];
 export function CourseDetailPage() {
     const { slug } = useParams<{ slug: string }>();
     const navigate = useNavigate();
-    const { profile, loading: authLoading } = useAuth();
+    const { profile, loading: authLoading, refreshProfile } = useAuth();
     const [course, setCourse] = useState<RoadmapFull | null>(null);
     const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
     const [lessonProgress, setLessonProgress] = useState<LessonProgress[]>([]);
@@ -124,7 +126,51 @@ export function CourseDetailPage() {
             if (profile && 'id' in profile && course) {
                 const updatedEnrollment = await roadmapService.checkEnrollment(profile.id, course.id);
                 setEnrollment(updatedEnrollment);
+
+                // If this lesson completion caused the entire course to hit 100%
+                if (updatedEnrollment?.status === 'completed' && enrollment.status !== 'completed') {
+                    // Fetch all enrollments to check placement dependencies
+                    const allEnrollments = await roadmapService.getUserEnrollments(profile.id);
+                    const completedSlugs = new Set();
+
+                    // Cross-reference course IDs to get slugs of completed courses
+                    for (const row of allEnrollments || []) {
+                        if (row.status === 'completed') {
+                            const courseData = await roadmapService.getRoadmapById(row.course_id);
+                            if (courseData?.slug) completedSlugs.add(courseData.slug);
+                        }
+                    }
+
+                    // For the newly completed course, make sure its slug is in the set
+                    if (course.slug) completedSlugs.add(course.slug);
+
+                    // Check placement JSON for newly fulfilled dependencies
+                    for (const company of placementData.companies) {
+                        const isEligible = company.requiredRoadmaps.every(slug => completedSlugs.has(slug));
+                        // If they fulfilled it AND this current course is one of the requirements (meaning they just unlocked it)
+                        if (isEligible && course.slug && company.requiredRoadmaps.includes(course.slug)) {
+                            toast.success(
+                                `Congratulations! You are now eligible to apply for ${company.role} at ${company.name}! 🎉`,
+                                { duration: 6000, icon: '🎓' }
+                            );
+                        }
+                    }
+                }
             }
+
+            // Refresh the auth profile so XP + level update everywhere
+            await refreshProfile();
+
+            // Show XP earned toast
+            toast.custom((t) => (
+                <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} flex items-center gap-3 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-5 py-3 rounded-2xl shadow-xl font-bold text-sm`}>
+                    <span className="text-xl">⚡</span>
+                    <div>
+                        <div className="font-black">+10 XP Earned!</div>
+                        <div className="font-medium opacity-90 text-xs">Lesson marked as complete</div>
+                    </div>
+                </div>
+            ), { duration: 3000, position: 'bottom-right' });
 
             // Route to quiz if available
             if (quiz && quiz.lesson_id === lessonId) {
@@ -150,8 +196,8 @@ export function CourseDetailPage() {
         return (
             <div className="p-10 text-center">
                 <h2 className="text-2xl font-bold text-gray-700">Course not found</h2>
-                <Link to="/student/courses" className="text-primary hover:underline mt-4 inline-block">
-                    ← Back to Course Marketplace
+                <Link to="/student/learning" className="text-primary hover:underline mt-4 inline-block">
+                    ← Back to Learning Path
                 </Link>
             </div>
         );
@@ -174,63 +220,62 @@ export function CourseDetailPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-[#FDFCFE] via-white to-[#F9FAFB]">
-            {/* Header / Hero */}
-            <div className="bg-gradient-to-r from-primary via-primary-hover to-accent-violet text-white p-10 md:p-16 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/4 animate-pulse" />
+        <div className="min-h-screen bg-gray-50">
+            {/* Header / Hero - clean white card */}
+            <div className="bg-white border-b border-gray-200 px-6 md:px-10 py-8">
 
-                <div className="max-w-7xl mx-auto relative z-10">
+                <div className="max-w-7xl mx-auto">
                     <Link
-                        to="/student/courses"
-                        className="inline-flex items-center gap-2 text-white/80 hover:text-white mb-8 transition-all hover:-translate-x-1 font-medium"
+                        to="/student/learning"
+                        className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 mb-6 transition-all hover:-translate-x-1 font-medium text-sm"
                     >
-                        <ChevronLeft className="w-5 h-5" />
-                        Back to Course Marketplace
+                        <ChevronLeft className="w-4 h-4" />
+                        Back to Learning Path
                     </Link>
 
-                    <div className="flex flex-col lg:flex-row items-start justify-between gap-10">
-                        <div className="flex-1 space-y-6">
-                            <div className="flex flex-wrap gap-3">
+                    <div className="flex flex-col lg:flex-row items-start justify-between gap-8">
+                        <div className="flex-1 space-y-4">
+                            <div className="flex flex-wrap gap-2">
                                 <Badge variant={course.difficulty === 'Beginner' ? 'success' : course.difficulty === 'Intermediate' ? 'info' : 'warning'} className="px-3 py-1">
                                     {course.difficulty}
                                 </Badge>
-                                <Badge variant="info" className="bg-white/20 text-white backdrop-blur-md border-white/30">
+                                <Badge className="bg-gray-100 text-gray-700 border-gray-200">
                                     {course.category || 'AI & DS'}
                                 </Badge>
                             </div>
 
-                            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight drop-shadow-sm">
+                            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-gray-900">
                                 {course.title}
                             </h1>
-                            <p className="text-white/90 text-xl max-w-3xl leading-relaxed font-medium">
+                            <p className="text-gray-600 text-base md:text-lg max-w-3xl leading-relaxed">
                                 {course.description}
                             </p>
 
-                            <div className="flex flex-wrap items-center gap-8 text-sm font-bold text-white/90 glass-card bg-white/10 border-white/20 p-4 rounded-2xl">
+                            <div className="flex flex-wrap items-center gap-6 text-sm font-semibold text-gray-600 bg-gray-50 border border-gray-200 p-4 rounded-xl">
                                 <div className="flex items-center gap-2">
-                                    <Clock className="w-5 h-5 text-yellow-300" />
+                                    <Clock className="w-4 h-4 text-amber-500" />
                                     <span>{estimatedHours} hours total</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <Video className="w-5 h-5 text-blue-300" />
+                                    <Video className="w-4 h-4 text-blue-500" />
                                     <span>{totalVideos} HD lessons</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <BookOpen className="w-5 h-5 text-green-300" />
+                                    <BookOpen className="w-4 h-4 text-green-500" />
                                     <span>{course.course_modules?.length} Curriculum modules</span>
                                 </div>
                                 {enrollment?.status === 'completed' && (
                                     <div className="flex items-center gap-2">
-                                        <Award className="w-5 h-5 text-amber-300" />
-                                        <span>Industry Certificate Unlocked</span>
+                                        <Award className="w-4 h-4 text-amber-500" />
+                                        <span className="text-amber-600 font-bold">Certificate Unlocked</span>
                                     </div>
                                 )}
                             </div>
                         </div>
 
-                        <div className="flex-shrink-0 lg:mt-6">
-                            <div className="bg-white/10 p-4 rounded-[40px] backdrop-blur-xl border border-white/20 shadow-2xl">
-                                <ProgressRing progress={progress} size="xl" strokeWidth={10} color="#fff" />
+                        <div className="flex-shrink-0">
+                            <div className="bg-gray-100 p-4 rounded-3xl border border-gray-200 shadow-sm">
+                                <ProgressRing progress={progress} size="xl" strokeWidth={10} color="#7c3aed" />
                             </div>
                         </div>
                     </div>
@@ -245,19 +290,19 @@ export function CourseDetailPage() {
                     <div className="lg:col-span-2 space-y-8">
 
                         {!enrollment ? (
-                            <div className="bg-gradient-to-br from-primary/5 to-accent-violet/5 rounded-[32px] border-2 border-dashed border-primary/20 p-12 text-center animate-pulse-slow">
-                                <Lock className="w-16 h-16 text-primary mx-auto mb-6 opacity-40" />
-                                <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">Access Restricted</h2>
-                                <p className="text-gray-600 text-lg mb-8 max-w-md mx-auto">
+                            <div className="bg-white rounded-3xl border-2 border-dashed border-gray-200 p-12 text-center">
+                                <Lock className="w-14 h-14 text-gray-400 mx-auto mb-5" />
+                                <h2 className="text-2xl font-black text-gray-900 mb-3">Access Restricted</h2>
+                                <p className="text-gray-500 text-base mb-8 max-w-md mx-auto">
                                     This curriculum is only available to enrolled students. Join the path to start your journey.
                                 </p>
-                                <Button
-                                    className="h-14 px-10 text-lg bg-gradient-to-r from-primary to-accent-violet shadow-2xl shadow-primary/30"
+                                <button
+                                    className="inline-flex items-center gap-2 px-8 py-3.5 bg-gray-900 hover:bg-gray-800 text-white font-bold rounded-xl transition-colors disabled:opacity-60 cursor-pointer"
                                     onClick={handleEnroll}
-                                    isLoading={isEnrolling}
+                                    disabled={isEnrolling}
                                 >
-                                    Enroll in this Course Now
-                                </Button>
+                                    {isEnrolling ? 'Enrolling…' : 'Enroll in this Course Now'}
+                                </button>
                             </div>
                         ) : (
                             <div className="space-y-6">
@@ -327,6 +372,15 @@ export function CourseDetailPage() {
                                                                     HD Quality • {lesson.duration_mins || 10} mins
                                                                 </div>
                                                             </div>
+                                                            {/* XP chip */}
+                                                            <span className={cn(
+                                                                "flex-shrink-0 text-[10px] font-black px-2 py-0.5 rounded-full",
+                                                                isLessonCompleted(lesson.id)
+                                                                    ? "bg-green-100 text-green-700"
+                                                                    : "bg-yellow-100 text-yellow-700"
+                                                            )}>
+                                                                {isLessonCompleted(lesson.id) ? '✓ +10 XP' : '+10 XP'}
+                                                            </span>
                                                             <ChevronRight className="w-5 h-5 text-gray-300 opacity-0 group-hover:opacity-100 transition-all" />
                                                         </button>
                                                     ))}
@@ -360,12 +414,12 @@ export function CourseDetailPage() {
 
                                     <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-50">
                                         <div className="p-4 bg-[#F9FAFB] rounded-2xl">
-                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-1">XP Value</p>
-                                            <p className="text-xl font-black text-gray-900">{estimatedHours * 10} XP</p>
+                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-1">My XP</p>
+                                            <p className="text-xl font-black text-gray-900">{profile && 'xp' in profile ? profile.xp : 0} XP</p>
                                         </div>
                                         <div className="p-4 bg-[#F9FAFB] rounded-2xl">
-                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-1">Difficulty</p>
-                                            <p className="text-xl font-black text-gray-900">{course.difficulty}</p>
+                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-1">My Level</p>
+                                            <p className="text-xl font-black text-gray-900">{profile && 'level' in profile ? profile.level : 'Beginner'}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -373,27 +427,25 @@ export function CourseDetailPage() {
 
                             {enrollment && (
                                 <div className="space-y-3">
-                                    <Button className="w-full h-14 text-white font-bold rounded-2xl bg-gradient-to-r from-primary to-accent-violet hover:shadow-xl transition-all">
+                                    <button className="w-full h-12 text-white font-bold rounded-xl bg-gray-900 hover:bg-gray-800 transition-colors">
                                         Start Next Lesson
-                                    </Button>
-                                    <Button variant="outline" className="w-full h-14 font-bold rounded-2xl border-gray-200 hover:bg-gray-50 flex items-center justify-center gap-2">
-                                        <FileText className="w-5 h-5" />
+                                    </button>
+                                    <button className="w-full h-12 font-bold rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 flex items-center justify-center gap-2 transition-colors">
+                                        <FileText className="w-4 h-4" />
                                         Download Resources
-                                    </Button>
+                                    </button>
                                 </div>
                             )}
                         </div>
 
-                        {/* AI Insights Gallery */}
-                        <div className="bg-gradient-to-br from-[#2E1A47] to-[#1A0B2E] rounded-[32px] p-8 text-white shadow-2xl relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-[60px] -translate-y-1/2 translate-x-1/2" />
-
-                            <h3 className="text-xl font-black mb-6 flex items-center gap-3">
-                                <Brain className="w-6 h-6 text-primary-light" />
+                        {/* AI Insights */}
+                        <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
+                            <h3 className="text-base font-black text-gray-900 flex items-center gap-2">
+                                <Brain className="w-5 h-5 text-violet-600" />
                                 AI Guidance
                             </h3>
 
-                            <div className="space-y-5">
+                            <div className="space-y-3">
                                 <InsightItem
                                     text="This course aligns with current Data Scientist requirements at Google and Amazon."
                                 />
@@ -406,7 +458,7 @@ export function CourseDetailPage() {
                             </div>
 
                             <div className="mt-8 pt-6 border-t border-white/10 text-center">
-                                <p className="text-xs text-white/40 font-bold uppercase tracking-widest mb-2">Confidence Score</p>
+                                <p className="text-xs text-black/40 font-bold uppercase tracking-widest mb-2">Confidence Score</p>
                                 <div className="text-3xl font-black text-primary-light">94%</div>
                             </div>
                         </div>
@@ -499,9 +551,9 @@ export function CourseDetailPage() {
 
 function InsightItem({ text }: { text: string }) {
     return (
-        <div className="flex items-start gap-4 p-4 bg-white/5 rounded-2xl border border-white/10 hover:bg-white/10 transition-colors">
-            <div className="w-2 h-2 rounded-full bg-primary-light mt-2 flex-shrink-0 animate-pulse" />
-            <p className="text-sm text-white/80 leading-relaxed font-medium">{text}</p>
+        <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100 hover:bg-gray-100 transition-colors">
+            <div className="w-2 h-2 rounded-full bg-violet-500 mt-1.5 flex-shrink-0" />
+            <p className="text-sm text-gray-700 leading-relaxed font-medium">{text}</p>
         </div>
     );
 }
