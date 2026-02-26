@@ -16,6 +16,8 @@ export interface Database {
                     content: string
                     type: 'general' | 'alert' | 'event'
                     is_active: boolean
+                    is_deleted: boolean
+                    expires_at: string | null
                     created_by: string
                     created_at: string
                 }
@@ -25,6 +27,8 @@ export interface Database {
                     content: string
                     type?: 'general' | 'alert' | 'event'
                     is_active?: boolean
+                    is_deleted?: boolean
+                    expires_at?: string | null
                     created_by: string
                     created_at?: string
                 }
@@ -34,6 +38,8 @@ export interface Database {
                     content?: string
                     type?: 'general' | 'alert' | 'event'
                     is_active?: boolean
+                    is_deleted?: boolean
+                    expires_at?: string | null
                     created_by?: string
                     created_at?: string
                 }
@@ -667,7 +673,13 @@ export interface Database {
             [_ in never]: never
         }
         Functions: {
-            [_ in never]: never
+            increment_xp: {
+                Args: {
+                    user_id: string
+                    amount: number
+                }
+                Returns: undefined
+            }
         }
         Enums: {
             [_ in never]: never

@@ -9,7 +9,7 @@ export const announcementsService = {
         const { data, error } = await supabase
             .from('announcements')
             .select('*')
-            .eq('is_active', true)
+            .neq('is_deleted', true)
             .order('created_at', { ascending: false });
 
         if (error) {
@@ -24,13 +24,15 @@ export const announcementsService = {
         content: string;
         type: 'general' | 'alert' | 'event';
         created_by: string;
+        expires_at?: string | null;
     }) {
         const { data, error } = await supabase
             .from('announcements')
             .insert([
                 {
                     ...announcement,
-                    is_active: true
+                    is_active: true,
+                    is_deleted: false
                 }
             ])
             .select()
@@ -38,5 +40,14 @@ export const announcementsService = {
 
         if (error) throw error;
         return data as Announcement;
+    },
+
+    async deleteAnnouncement(id: string) {
+        const { error } = await supabase
+            .from('announcements')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
     }
 };

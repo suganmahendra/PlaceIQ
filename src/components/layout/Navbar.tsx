@@ -4,11 +4,16 @@ import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, BrainCircuit, ChevronRight } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/Button';
+import { useAuth } from '../../contexts/AuthContext';
 
 export function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const location = useLocation();
+    const { user, role } = useAuth();
+
+    // Determine user dashboard link
+    const dashboardLink = role === 'mentor' ? '/mentor/dashboard' : '/student/dashboard';
 
     useEffect(() => {
         const handleScroll = () => {
@@ -62,15 +67,23 @@ export function Navbar() {
 
                     {/* Desktop Actions */}
                     <div className="hidden md:flex items-center gap-4">
-                        <Link to="/login">
-                            <Button variant="ghost" size="sm">Log In</Button>
-                        </Link>
-                        <Link to="/register">
-                            <Button>
-                                Get Started
-                                <ChevronRight className="w-4 h-4 ml-1" />
-                            </Button>
-                        </Link>
+                        {user ? (
+                            <Link to={dashboardLink}>
+                                <Button>Dashboard</Button>
+                            </Link>
+                        ) : (
+                            <>
+                                <Link to="/login">
+                                    <Button variant="ghost" size="sm">Log In</Button>
+                                </Link>
+                                <Link to="/register">
+                                    <Button>
+                                        Get Started
+                                        <ChevronRight className="w-4 h-4 ml-1" />
+                                    </Button>
+                                </Link>
+                            </>
+                        )}
                     </div>
 
                     {/* Mobile Menu Toggle */}
@@ -105,12 +118,20 @@ export function Navbar() {
                                 </Link>
                             ))}
                             <div className="border-t border-gray-100 pt-4 flex flex-col gap-2">
-                                <Link to="/login" onClick={() => setIsOpen(false)}>
-                                    <Button variant="outline" className="w-full justify-center">Log In</Button>
-                                </Link>
-                                <Link to="/register" onClick={() => setIsOpen(false)}>
-                                    <Button className="w-full justify-center">Get Started</Button>
-                                </Link>
+                                {user ? (
+                                    <Link to={dashboardLink} onClick={() => setIsOpen(false)}>
+                                        <Button className="w-full justify-center">Dashboard</Button>
+                                    </Link>
+                                ) : (
+                                    <>
+                                        <Link to="/login" onClick={() => setIsOpen(false)}>
+                                            <Button variant="outline" className="w-full justify-center">Log In</Button>
+                                        </Link>
+                                        <Link to="/register" onClick={() => setIsOpen(false)}>
+                                            <Button className="w-full justify-center">Get Started</Button>
+                                        </Link>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </motion.div>

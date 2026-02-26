@@ -134,11 +134,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, [initializeAuth]);
 
     const signOut = async () => {
-        await authService.logoutUser();
-        setSession(null);
-        setUser(null);
-        setRole(null);
-        setProfile(null);
+        try {
+            await authService.logoutUser();
+        } catch (error) {
+            console.error('Logout error:', error);
+        } finally {
+            // Guarantee client-side invalidation even if server-side checkout failed
+            setSession(null);
+            setUser(null);
+            setRole(null);
+            setProfile(null);
+
+            // Explicitly clear any lingering Supabase auth tokens from localStorage just in case
+            Object.keys(localStorage).forEach(key => {
+                if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+                    localStorage.removeItem(key);
+                }
+            });
+        }
     };
 
     return (

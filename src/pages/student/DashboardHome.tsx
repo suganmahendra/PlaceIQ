@@ -1,13 +1,36 @@
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Award, Zap, BookOpen, Target, ChevronRight, PlayCircle, Clock, CheckCircle2, TrendingUp, type LucideIcon } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { AnnouncementsList } from '../../components/dashboard/AnnouncementsList';
 import { useAuth } from '../../contexts/AuthContext';
+import { roadmapService } from '../../services/RoadmapService';
 import type { Database } from '../../types/database.types';
+import placementData from '../../data/placementMatches.json';
 
 type StudentProfile = Database['public']['Tables']['students']['Row'];
 
 export function DashboardHome() {
     const { profile, loading } = useAuth();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [activeEnrollments, setActiveEnrollments] = useState<any[]>([]);
+    const [isLoadingCourses, setIsLoadingCourses] = useState(true);
+
+    useEffect(() => {
+        const fetchEnrollments = async () => {
+            if (profile?.id) {
+                try {
+                    const data = await roadmapService.getActiveEnrollmentsWithDetails(profile.id);
+                    setActiveEnrollments(data || []);
+                } catch (error) {
+                    console.error("Failed to fetch active enrollments", error);
+                } finally {
+                    setIsLoadingCourses(false);
+                }
+            }
+        };
+        if (!loading) fetchEnrollments();
+    }, [profile, loading]);
 
     if (loading) {
         return (
@@ -23,9 +46,29 @@ export function DashboardHome() {
     const isStudent = profile && 'xp' in profile;
     const studentProfile = isStudent ? (profile as StudentProfile) : null;
 
-    const level = studentProfile?.level || 'N/A';
+    // Calculate profile completion natively
+    const calculateProfileCompletion = (p: StudentProfile | null) => {
+        if (!p) return 0;
+        const requiredFields = [
+            p.full_name,
+            p.email,
+            p.department_id,
+            p.register_number,
+            p.bio,
+            p.resume_url,
+            p.avatar_url
+        ];
+
+        const filledCount = requiredFields.filter(field => field !== null && field !== undefined && field !== '').length;
+        const hasSocials = p.social_links && typeof p.social_links === 'object' && Object.keys(p.social_links).length > 0 ? 1 : 0;
+
+        const totalFields = requiredFields.length + 1;
+        return Math.round(((filledCount + hasSocials) / totalFields) * 100);
+    };
+
+    const level = studentProfile?.level || 'Beginner';
     const xp = studentProfile?.xp || 0;
-    const profileCompletion = studentProfile?.profile_completion || 0;
+    const profileCompletion = calculateProfileCompletion(studentProfile);
 
     return (
         <div className="space-y-8">
@@ -37,7 +80,7 @@ export function DashboardHome() {
                 <div className="relative z-10">
                     <div className="flex flex-col md:flex-row justify-between md:items-end gap-6">
                         <div>
-                            <h1 className="text-3xl md:text-4xl font-bold mb-3">Welcome back, {firstName}! 👋</h1>
+                            <h1 className="text-3xl md:text-4xl font-bold mb-3">Welcome back, {firstName}!</h1>
                             <p className="text-white/90 text-lg max-w-xl leading-relaxed">
                                 You're currently at "{level}" level with {xp} XP. Your profile is {profileCompletion}% complete. Keep up the momentum!
                             </p>
@@ -93,42 +136,88 @@ export function DashboardHome() {
                 <div className="lg:col-span-2 space-y-8">
                     <div className="space-y-6">
                         <div className="flex items-center justify-between">
-                            <h3 className="text-xl font-bold text-gray-900">Recommended For You</h3>
-                            <Button variant="link" className="text-primary hover:no-underline px-0">See All <ChevronRight className="w-4 h-4 ml-1" /></Button>
+                            <h3 className="text-xl font-bold text-gray-900">
+                                {activeEnrollments.length > 0 ? 'Continue Learning' : 'Recommended For You'}
+                            </h3>
+                            <Link to="/student/courses" className="text-primary hover:no-underline px-0 text-sm font-medium flex items-center">
+                                Browse All <ChevronRight className="w-4 h-4 ml-1" />
+                            </Link>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            {/* Content Cards */}
-                            <ContentCard
-                                title="Advanced Graph Algorithms"
-                                category="DSA"
-                                duration="45 min"
-                                instructor="Dr. Angela"
-                                progress={30}
-                                image="https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=400&q=80"
-                            />
-                            <ContentCard
-                                title="System Design Basics"
-                                category="Architecture"
-                                duration="1h 20m"
-                                instructor="Alex Xu"
-                                progress={0}
-                                image="https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&q=80"
-                            />
+                            {isLoadingCourses ? (
+                                <div className="col-span-2 text-center py-10 text-gray-500">Loading your courses...</div>
+                            ) : activeEnrollments.length > 0 ? (
+                                activeEnrollments.map((enrollment) => (
+                                    <Link key={enrollment.id} to={`/student/courses/${enrollment.courses?.slug}`}>
+                                        <ContentCard
+                                            title={enrollment.courses?.title || 'Unknown Course'}
+                                            category={enrollment.courses?.category || 'Learning Path'}
+                                            duration={`${enrollment.courses?.estimated_hours || 0}h`}
+                                            instructor={enrollment.courses?.created_by || 'PlaceIQ Instructor'}
+                                            progress={enrollment.progress_percent || 0}
+                                            image={enrollment.courses?.thumbnail_url || 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=400&q=80'}
+                                        />
+                                    </Link>
+                                ))
+                            ) : (
+                                <>
+                                    <Link to="/student/courses/dsa-mastery">
+                                        <ContentCard
+                                            title="Advanced Graph Algorithms"
+                                            category="DSA"
+                                            duration="45 min"
+                                            instructor="Dr. Angela"
+                                            progress={0}
+                                            image="https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=400&q=80"
+                                        />
+                                    </Link>
+                                    <Link to="/student/courses/system-design">
+                                        <ContentCard
+                                            title="System Design Basics"
+                                            category="Architecture"
+                                            duration="1h 20m"
+                                            instructor="Alex Xu"
+                                            progress={0}
+                                            image="https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&q=80"
+                                        />
+                                    </Link>
+                                </>
+                            )}
                         </div>
                     </div>
 
                     <div className="glass-card bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="font-bold text-gray-900 text-lg">Placement Matches Preview</h3>
-                            <span className="text-xs font-medium px-2 py-1 bg-green-100 text-green-700 rounded-full">3 New</span>
+                            <span className="text-xs font-medium px-2 py-1 bg-green-100 text-green-700 rounded-full">
+                                {placementData.companies.length} Mapped
+                            </span>
                         </div>
                         <div className="space-y-4">
-                            <JobRow company="Google" role="Frontend Engineer" match={95} logo="G" color="bg-red-50 text-red-600" />
-                            <JobRow company="Amazon" role="SDE I" match={88} logo="A" color="bg-yellow-50 text-yellow-600" />
-                            <JobRow company="Microsoft" role="Full Stack Developer" match={82} logo="M" color="bg-blue-50 text-blue-600" />
+                            {placementData.companies.slice(0, 3).map((company) => {
+                                // Calculate how many required roadmaps the user has completed
+                                const completedRequired = company.requiredRoadmaps.filter(requiredSlug =>
+                                    activeEnrollments.some(enrollment =>
+                                        enrollment.courses?.slug === requiredSlug && enrollment.status === 'completed'
+                                    )
+                                ).length;
+
+                                const matchPercent = Math.round((completedRequired / company.requiredRoadmaps.length) * 100) || 0;
+
+                                return (
+                                    <JobRow
+                                        key={company.id}
+                                        company={company.name}
+                                        role={company.role}
+                                        match={matchPercent}
+                                        logo={company.logo}
+                                        color={company.color}
+                                    />
+                                );
+                            })}
                         </div>
-                        <Button variant="outline" className="w-full mt-6 border-gray-200 hover:bg-gray-50">View All 12 Matches</Button>
+                        <Button variant="outline" className="w-full mt-6 border-gray-200 hover:bg-gray-50">View All Matches</Button>
                     </div>
                 </div>
 

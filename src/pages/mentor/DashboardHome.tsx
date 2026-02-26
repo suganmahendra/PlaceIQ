@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { CreateAnnouncementForm } from '../../components/dashboard/CreateAnnouncementForm';
 import { AnnouncementsList } from '../../components/dashboard/AnnouncementsList';
 import { useAuth } from '../../contexts/AuthContext';
@@ -6,6 +7,7 @@ import { Globe } from 'lucide-react';
 export function DashboardHome() {
     const { profile } = useAuth();
     const firstName = profile?.full_name?.split(' ')[0] || 'Mentor';
+    const [refreshCount, setRefreshCount] = useState(0);
 
     return (
         <div className="space-y-8 p-6 md:p-10">
@@ -18,7 +20,7 @@ export function DashboardHome() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Create Announcement */}
                 <div className="space-y-6">
-                    <CreateAnnouncementForm />
+                    <CreateAnnouncementForm onCreated={() => setRefreshCount(prev => prev + 1)} />
                 </div>
 
                 {/* Existing Announcements Preview */}
@@ -30,7 +32,7 @@ export function DashboardHome() {
                                 Current Global Stickies
                             </h3>
                         </div>
-                        <AnnouncementsList />
+                        <AnnouncementsList showDelete={true} refreshTrigger={refreshCount} />
                     </div>
                 </div>
             </div>

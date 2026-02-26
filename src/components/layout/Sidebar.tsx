@@ -1,6 +1,7 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNotifications } from '../../contexts/NotificationContext';
 import {
     LayoutDashboard,
     BookOpen,
@@ -42,10 +43,17 @@ interface SidebarProps {
 
 export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: SidebarProps) {
     const location = useLocation();
-    const { role } = useAuth();
+    const navigate = useNavigate();
+    const { role, signOut } = useAuth();
+    const { unreadCount, clearUnread } = useNotifications();
 
     // Determine which links to show based on the user's role
     const sidebarLinks = role === 'mentor' ? mentorLinks : studentLinks;
+
+    const handleLogout = async () => {
+        await signOut();
+        navigate('/login');
+    };
 
     return (
         <>
@@ -102,7 +110,10 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
                                 <Link
                                     key={link.path}
                                     to={link.path}
-                                    onClick={() => setMobileOpen(false)} // Close on navigate (mobile)
+                                    onClick={() => {
+                                        setMobileOpen(false);
+                                        if (link.path === '/student/announcements') clearUnread();
+                                    }}
                                     className={cn(
                                         "flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group relative",
                                         isActive
@@ -112,7 +123,17 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
                                     title={collapsed ? link.name : undefined}
                                 >
                                     <link.icon className={cn("w-5 h-5 min-w-[20px] transition-colors", isActive ? "text-primary" : "text-text-muted group-hover:text-primary")} />
-                                    {!collapsed && <span className="truncate">{link.name}</span>}
+                                    {!collapsed && <span className="truncate flex-1">{link.name}</span>}
+
+                                    {/* Badge on Announcements for students */}
+                                    {!collapsed && link.path === '/student/announcements' && role === 'student' && unreadCount > 0 && (
+                                        <span className="relative flex h-4 w-4 ml-auto">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500 items-center justify-center">
+                                                <span className="text-[8px] font-bold text-white">{unreadCount > 9 ? '9+' : unreadCount}</span>
+                                            </span>
+                                        </span>
+                                    )}
 
                                     {collapsed && isActive && <div className="absolute left-1 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-primary shadow shadow-primary/50" />}
                                 </Link>
@@ -122,15 +143,16 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
                 </div>
 
                 <div className="p-4 border-t border-white/20 bg-white/30 backdrop-blur-md">
-                    <Link to="/login">
-                        <button className={cn(
-                            "flex items-center gap-3 w-full px-3 py-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors group hover:shadow-sm",
+                    <button
+                        onClick={handleLogout}
+                        className={cn(
+                            "flex items-center gap-3 w-full px-3 py-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors group hover:shadow-sm cursor-pointer",
                             collapsed && "justify-center"
-                        )}>
-                            <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                            {!collapsed && <span className="font-medium">Logout</span>}
-                        </button>
-                    </Link>
+                        )}
+                    >
+                        <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                        {!collapsed && <span className="font-medium">Logout</span>}
+                    </button>
                 </div>
             </aside>
         </>

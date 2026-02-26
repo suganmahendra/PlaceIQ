@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Bell, Calendar, User } from 'lucide-react';
+import { Bell, User } from 'lucide-react';
 import { Badge } from '../../components/ui/Badge';
 
 interface Announcement {
@@ -8,39 +8,109 @@ interface Announcement {
     title: string;
     content: string;
     created_at: string;
+    expires_at?: string | null;
+    is_deleted?: boolean;
     type: 'general' | 'alert' | 'event';
-    mentor: {
-        full_name: string;
-    } | null;
+    mentor: { full_name: string } | null;
 }
 
 export function AnnouncementsPage() {
     const [announcements, setAnnouncements] = useState<Announcement[]>([]);
     const [loading, setLoading] = useState(true);
+    const prevCountRef = useRef(0);
+
+    const fetchAnnouncements = async (showToast: boolean = false) => {
+        try {
+            const { data, error } = await supabase
+                .from('announcements')
+                .select(`*, mentor:mentors(full_name)`)
+                .neq('is_deleted', true)
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            const now = new Date();
+            const valid = ((data as unknown as Announcement[]) || []).filter(
+                a => !a.expires_at || new Date(a.expires_at) > now
+            );
+
+            if (showToast && valid.length > prevCountRef.current && prevCountRef.current > 0) {
+                // New announcement arrived — TopBar will show the toast, just update
+            }
+            prevCountRef.current = valid.length;
+            setAnnouncements(valid);
+        } catch (err) {
+            console.error('Error fetching announcements:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchAnnouncements = async () => {
-            try {
-                const { data, error } = await supabase
-                    .from('announcements')
-                    .select(`
-                        *,
-                        mentor:mentors(full_name)
-                    `)
-                    .order('created_at', { ascending: false });
+        fetchAnnouncements(false);
 
-                if (error) throw error;
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                setAnnouncements((data as any) || []);
-            } catch (error) {
-                console.error('Error fetching announcements:', error);
-            } finally {
-                setLoading(false);
-            }
+        // Poll every 3 seconds — avoids competing WebSocket channels
+        // The TopBar's single global channel handles the notification popup
+        const intervalId = setInterval(() => fetchAnnouncements(true), 3000);
+
+        // Also expire items locally every 30s without re-fetch
+        const expireId = setInterval(() => {
+            setAnnouncements(prev => {
+                const now = new Date();
+                const filtered = prev.filter(a => !a.expires_at || new Date(a.expires_at) > now);
+                return filtered.length !== prev.length ? filtered : prev;
+            });
+        }, 30000);
+
+        return () => {
+            clearInterval(intervalId);
+            clearInterval(expireId);
         };
-
-        fetchAnnouncements();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    const renderContentWithLinks = (text: string) => {
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        const parts = text.split(urlRegex);
+        return parts.map((part, i) =>
+            part.match(urlRegex) ? (
+                <a key={i} href={part} target="_blank" rel="noopener noreferrer"
+                    className="text-primary font-semibold hover:underline break-all">
+                    {part}
+                </a>
+            ) : part
+        );
+    };
+
+    const getRelativeTime = (dateString: string, isExpiry = false) => {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffSec = Math.floor((date.getTime() - now.getTime()) / 1000);
+
+        if (isExpiry) {
+            if (diffSec <= 0) return 'Expired';
+            if (diffSec < 60) return 'Expires in < 1 min';
+            const m = Math.floor(diffSec / 60);
+            if (m < 60) return `Expires in ${m}m`;
+            const h = Math.floor(m / 60);
+            if (h < 24) return `Expires in ${h}h`;
+            return `Expires in ${Math.floor(h / 24)}d`;
+        } else {
+            const diff = -diffSec;
+            if (diff < 60) return 'Just now';
+            const m = Math.floor(diff / 60);
+            if (m < 60) return `${m}m ago`;
+            const h = Math.floor(m / 60);
+            if (h < 24) return `${h}h ago`;
+            const d = Math.floor(h / 24);
+            return d === 1 ? 'Yesterday' : `${d}d ago`;
+        }
+    };
+
+    const typeBadge = (type: string) => {
+        if (type === 'alert') return <Badge variant="warning">Alert</Badge>;
+        if (type === 'event') return <Badge variant="info">Event</Badge>;
+        return <Badge>General</Badge>;
+    };
 
     return (
         <div className="p-4 md:p-8 space-y-6">
@@ -67,31 +137,27 @@ export function AnnouncementsPage() {
             ) : (
                 <div className="grid gap-4">
                     {announcements.map((item) => (
-                        <div key={item.id} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                            <div className="flex justify-between items-start mb-3">
-                                <div>
-                                    <h3 className="text-lg font-bold text-gray-900">{item.title}</h3>
-                                    <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
-                                        <div className="flex items-center gap-1">
-                                            <Calendar className="w-3 h-3" />
-                                            <span>{new Date(item.created_at).toLocaleDateString()}</span>
-                                        </div>
-                                        {item.mentor && (
-                                            <div className="flex items-center gap-1">
-                                                <User className="w-3 h-3" />
-                                                <span>{item.mentor.full_name}</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                                {item.type === 'alert' && (
-                                    <Badge variant="warning">Alert</Badge>
+                        <div key={item.id} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="flex justify-between items-start gap-4 mb-3">
+                                <h3 className="text-base font-bold text-gray-900 leading-snug">{item.title}</h3>
+                                <div className="flex-shrink-0">{typeBadge(item.type)}</div>
+                            </div>
+
+                            <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap" style={{ wordBreak: 'break-word' }}>
+                                {renderContentWithLinks(item.content)}
+                            </p>
+
+                            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-gray-400">
+                                <span>{getRelativeTime(item.created_at)}</span>
+                                {item.expires_at && (
+                                    <span className="text-orange-500">• {getRelativeTime(item.expires_at, true)}</span>
                                 )}
-                                {item.type === 'event' && (
-                                    <Badge variant="info">Event</Badge>
+                                {item.mentor && (
+                                    <span className="flex items-center gap-1 text-blue-500">
+                                        • <User className="w-3 h-3" /> {item.mentor.full_name}
+                                    </span>
                                 )}
                             </div>
-                            <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{item.content}</p>
                         </div>
                     ))}
                 </div>

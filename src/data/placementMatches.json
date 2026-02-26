@@ -1,0 +1,59 @@
+{
+    "companies": [
+        {
+            "id": "google",
+            "name": "Google",
+            "role": "Frontend Developer",
+            "logo": "G",
+            "color": "bg-red-50 text-red-600",
+            "requiredRoadmaps": [
+                "frontend-basics",
+                "react-masterclass"
+            ]
+        },
+        {
+            "id": "amazon",
+            "name": "Amazon",
+            "role": "SDE I",
+            "logo": "A",
+            "color": "bg-yellow-50 text-yellow-600",
+            "requiredRoadmaps": [
+                "dsa-mastery",
+                "system-design"
+            ]
+        },
+        {
+            "id": "microsoft",
+            "name": "Microsoft",
+            "role": "Full Stack Developer",
+            "logo": "M",
+            "color": "bg-blue-50 text-blue-600",
+            "requiredRoadmaps": [
+                "frontend-basics",
+                "backend-node"
+            ]
+        },
+        {
+            "id": "meta",
+            "name": "Meta",
+            "role": "React Native Engineer",
+            "logo": "M",
+            "color": "bg-blue-50 text-blue-800",
+            "requiredRoadmaps": [
+                "react-masterclass",
+                "dsa-mastery"
+            ]
+        },
+        {
+            "id": "netflix",
+            "name": "Netflix",
+            "role": "Cloud Architect",
+            "logo": "N",
+            "color": "bg-red-50 text-red-700",
+            "requiredRoadmaps": [
+                "system-design",
+                "backend-node"
+            ]
+        }
+    ]
+}

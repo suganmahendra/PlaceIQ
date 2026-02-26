@@ -107,7 +107,10 @@ export const LearningPathPage: React.FC = () => {
                         No courses available at the moment. Check back later!
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div
+                        className="grid gap-5"
+                        style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
+                    >
                         {courses.map((course) => {
                             // eslint-disable-next-line @typescript-eslint/no-unused-vars
                             const IconComponent = BookOpen;
