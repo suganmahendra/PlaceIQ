@@ -20,51 +20,75 @@ export const authService = {
         department: string = 'AI & Data Science',
         registerNumber: string
     ) {
-        const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-                data: {
-                    full_name: fullName,
-                    role: 'student',
-                    department: department,
-                    register_number: registerNumber
+        try {
+            const { data, error } = await supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    data: {
+                        full_name: fullName,
+                        role: 'student',
+                        department: department,
+                        register_number: registerNumber
+                    },
+                    emailRedirectTo: `${window.location.origin}/auth/callback`,
                 },
-                emailRedirectTo: `${window.location.origin}/auth/callback`,
-            },
-        });
+            });
 
-        if (error) throw error;
-        // Check for session to ensure we don't return false success if session is missing (verification required)
-        if (data.user && !data.session) {
-            // Verification required
-            return { user: data.user, session: null, verificationRequired: true };
+            if (error) {
+                if (error.message.includes('Failed to fetch')) {
+                    throw new Error('Network error: Please check your internet connection, disable ad-blockers, or try a different network.');
+                }
+                throw error;
+            }
+            // Check for session to ensure we don't return false success if session is missing (verification required)
+            if (data.user && !data.session) {
+                // Verification required
+                return { user: data.user, session: null, verificationRequired: true };
+            }
+            return data;
+        } catch (err: any) {
+            if (err.message && err.message.includes('Failed to fetch')) {
+                throw new Error('Network error: Unable to connect to the authentication server. Please check your internet connection, disable any ad-blockers/VPN, or try a different network.');
+            }
+            throw err;
         }
-        return data;
     },
 
     /**
      * Register a new mentor
      */
     async registerMentor(email: string, password: string, fullName: string, expertise: string) {
-        const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-                data: {
-                    full_name: fullName,
-                    role: 'mentor',
-                    expertise: expertise,
+        try {
+            const { data, error } = await supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    data: {
+                        full_name: fullName,
+                        role: 'mentor',
+                        expertise: expertise,
+                    },
+                    emailRedirectTo: `${window.location.origin}/auth/callback`,
                 },
-                emailRedirectTo: `${window.location.origin}/auth/callback`,
-            },
-        });
+            });
 
-        if (error) throw error;
-        if (data.user && !data.session) {
-            return { user: data.user, session: null, verificationRequired: true };
+            if (error) {
+                if (error.message.includes('Failed to fetch')) {
+                    throw new Error('Network error: Please check your internet connection, disable ad-blockers, or try a different network.');
+                }
+                throw error;
+            }
+            if (data.user && !data.session) {
+                return { user: data.user, session: null, verificationRequired: true };
+            }
+            return data;
+        } catch (err: any) {
+            if (err.message && err.message.includes('Failed to fetch')) {
+                throw new Error('Network error: Unable to connect to the authentication server. Please check your internet connection, disable any ad-blockers/VPN, or try a different network.');
+            }
+            throw err;
         }
-        return data;
     },
 
     /**
