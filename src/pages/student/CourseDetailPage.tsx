@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import {
     ChevronLeft,
     ChevronDown,
@@ -16,37 +16,27 @@ import {
     Lock,
     Sparkles
 } from 'lucide-react';
-import toast from 'react-hot-toast';
 import { useAuth } from '../../contexts/AuthContext';
 import { roadmapService, type RoadmapFull } from '../../services/RoadmapService';
-import { quizService, type Quiz } from '../../services/QuizService';
-import placementData from '../../data/placementMatches.json';
-import { VideoPlayer } from '../../components/ui/VideoPlayer';
 import { ProgressBar } from '../../components/ui/ProgressBar';
 import { ProgressRing } from '../../components/ui/ProgressRing';
 import { Badge } from '../../components/ui/Badge';
-import { Button } from '../../components/ui/Button';
-import { AppViewer } from '../../components/ui/AppViewer';
+import { slugify } from './LessonPage';
 import { cn } from '../../lib/utils';
 import type { Database } from '../../types/database.types';
 
 type Enrollment = Database['public']['Tables']['enrollments']['Row'];
 type LessonProgress = Database['public']['Tables']['lesson_progress']['Row'];
-type Lesson = Database['public']['Tables']['course_lessons']['Row'];
 
 export function CourseDetailPage() {
     const { slug } = useParams<{ slug: string }>();
-    const navigate = useNavigate();
-    const { profile, loading: authLoading, refreshProfile } = useAuth();
+    const { profile, loading: authLoading } = useAuth();
     const [course, setCourse] = useState<RoadmapFull | null>(null);
     const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
     const [lessonProgress, setLessonProgress] = useState<LessonProgress[]>([]);
     const [expandedModules, setExpandedModules] = useState<string[]>([]);
-    const [selectedVideo, setSelectedVideo] = useState<Lesson | null>(null);
-    const [quiz, setQuiz] = useState<Quiz | null>(null);
     const [loading, setLoading] = useState(true);
     const [isEnrolling, setIsEnrolling] = useState(false);
-    const [isCompleting, setIsCompleting] = useState(false);
 
     useEffect(() => {
         const fetchCourseDetails = async () => {
@@ -86,18 +76,6 @@ export function CourseDetailPage() {
         }
     }, [slug, profile, authLoading]);
 
-    useEffect(() => {
-        const fetchQuiz = async () => {
-            if (selectedVideo) {
-                const q = await quizService.getQuizByLessonId(selectedVideo.id);
-                setQuiz(q);
-            } else {
-                setQuiz(null);
-            }
-        };
-        fetchQuiz();
-    }, [selectedVideo]);
-
     const handleEnroll = async () => {
         if (!profile || !course || !('id' in profile)) return;
         setIsEnrolling(true);
@@ -109,78 +87,6 @@ export function CourseDetailPage() {
             console.error('Enrollment failed:', error);
         } finally {
             setIsEnrolling(false);
-        }
-    };
-
-    const handleMarkComplete = async (lessonId: string) => {
-        if (!enrollment) return;
-        setIsCompleting(true);
-        try {
-            await roadmapService.updateLessonProgress(enrollment.id, lessonId, 0, true);
-
-            // Refresh data
-            const updatedProgress = await roadmapService.getLessonProgress(enrollment.id);
-            setLessonProgress(updatedProgress || []);
-
-            // Re-fetch enrollment to get updated overall progress
-            if (profile && 'id' in profile && course) {
-                const updatedEnrollment = await roadmapService.checkEnrollment(profile.id, course.id);
-                setEnrollment(updatedEnrollment);
-
-                // If this lesson completion caused the entire course to hit 100%
-                if (updatedEnrollment?.status === 'completed' && enrollment.status !== 'completed') {
-                    // Fetch all enrollments to check placement dependencies
-                    const allEnrollments = await roadmapService.getUserEnrollments(profile.id);
-                    const completedSlugs = new Set();
-
-                    // Cross-reference course IDs to get slugs of completed courses
-                    for (const row of allEnrollments || []) {
-                        if (row.status === 'completed') {
-                            const courseData = await roadmapService.getRoadmapById(row.course_id);
-                            if (courseData?.slug) completedSlugs.add(courseData.slug);
-                        }
-                    }
-
-                    // For the newly completed course, make sure its slug is in the set
-                    if (course.slug) completedSlugs.add(course.slug);
-
-                    // Check placement JSON for newly fulfilled dependencies
-                    for (const company of placementData.companies) {
-                        const isEligible = company.requiredRoadmaps.every(slug => completedSlugs.has(slug));
-                        // If they fulfilled it AND this current course is one of the requirements (meaning they just unlocked it)
-                        if (isEligible && course.slug && company.requiredRoadmaps.includes(course.slug)) {
-                            toast.success(
-                                `Congratulations! You are now eligible to apply for ${company.role} at ${company.name}! 🎉`,
-                                { duration: 6000, icon: '🎓' }
-                            );
-                        }
-                    }
-                }
-            }
-
-            // Refresh the auth profile so XP + level update everywhere
-            await refreshProfile();
-
-            // Show XP earned toast
-            toast.custom((t) => (
-                <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} flex items-center gap-3 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-5 py-3 rounded-2xl shadow-xl font-bold text-sm`}>
-                    <span className="text-xl">⚡</span>
-                    <div>
-                        <div className="font-black">+10 XP Earned!</div>
-                        <div className="font-medium opacity-90 text-xs">Lesson marked as complete</div>
-                    </div>
-                </div>
-            ), { duration: 3000, position: 'bottom-right' });
-
-            // Route to quiz if available
-            if (quiz && quiz.lesson_id === lessonId) {
-                navigate(`/student/quiz?id=${quiz.id}`);
-            }
-
-        } catch (error) {
-            console.error('Failed to mark lesson as complete:', error);
-        } finally {
-            setIsCompleting(false);
         }
     };
 
@@ -349,9 +255,9 @@ export function CourseDetailPage() {
                                             <div className="border-t border-gray-50 bg-gray-50/30 p-4 pt-2">
                                                 <div className="space-y-2">
                                                     {module.course_lessons?.map((lesson, lIdx) => (
-                                                        <button
+                                                        <Link
                                                             key={lesson.id}
-                                                            onClick={() => setSelectedVideo(lesson)}
+                                                            to={`/student/courses/${slug}/${slugify(lesson.title)}`}
                                                             className="w-full flex items-center gap-5 p-4 rounded-2xl hover:bg-white hover:shadow-md border border-transparent hover:border-gray-100 transition-all group"
                                                         >
                                                             <div className={cn(
@@ -382,7 +288,7 @@ export function CourseDetailPage() {
                                                                 {isLessonCompleted(lesson.id) ? '✓ +10 XP' : '+10 XP'}
                                                             </span>
                                                             <ChevronRight className="w-5 h-5 text-gray-300 opacity-0 group-hover:opacity-100 transition-all" />
-                                                        </button>
+                                                        </Link>
                                                     ))}
                                                 </div>
                                             </div>
@@ -481,70 +387,6 @@ export function CourseDetailPage() {
                 </div>
             </div>
 
-            {/* HIGH-END VIDEO MODAL */}
-            {selectedVideo && (
-                <div className="fixed inset-0 bg-black/95 z-[100] flex items-center justify-center p-4 md:p-10 backdrop-blur-md animate-fade-in" onClick={() => setSelectedVideo(null)}>
-                    <div className="bg-white rounded-[40px] max-w-6xl w-full shadow-2xl relative overflow-hidden animate-scale-in" onClick={(e) => e.stopPropagation()}>
-
-                        {/* Modal Header */}
-                        <div className="px-8 py-6 border-b border-gray-100 flex items-center justify-between bg-white/80 backdrop-blur-md sticky top-0 z-10">
-                            <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                                    <Play className="w-5 h-5 text-primary" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-black text-gray-900 leading-none">{selectedVideo.title}</h3>
-                                    <p className="text-sm text-gray-400 font-bold uppercase tracking-widest mt-2">Section: High-Quality Video Instruction</p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => setSelectedVideo(null)}
-                                className="w-12 h-12 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-600 transition-all flex items-center justify-center group"
-                            >
-                                <ChevronLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform rotate-180 transform" />
-                            </button>
-                        </div>
-
-                        {/* Player Frame (if video URL exists) */}
-                        {selectedVideo.video_url && (
-                            <div className="aspect-video bg-black relative group">
-                                <VideoPlayer
-                                    youtubeUrl={selectedVideo.video_url}
-                                    title={selectedVideo.title}
-                                />
-                            </div>
-                        )}
-
-                        {/* Content Area - Full width for reading */}
-                        <div className="p-8 md:p-12 bg-white flex flex-col items-center">
-                            <div className="w-full max-w-4xl mx-auto mb-16">
-                                <AppViewer initialContent={selectedVideo.content_markdown || ''} />
-                            </div>
-
-                            {/* Action Buttons at the bottom */}
-                            <div className="w-full max-w-2xl mx-auto flex flex-col sm:flex-row gap-4 justify-center items-center pt-8 border-t border-gray-100">
-                                <Button
-                                    className="h-14 px-8 font-black rounded-2xl text-lg shadow-xl shadow-primary/20 w-full sm:w-auto"
-                                    onClick={() => handleMarkComplete(selectedVideo.id)}
-                                    isLoading={isCompleting}
-                                    disabled={isLessonCompleted(selectedVideo.id)}
-                                >
-                                    {isLessonCompleted(selectedVideo.id) ? 'Lesson Completed ✓' : 'Mark as Complete'}
-                                </Button>
-
-                                {isLessonCompleted(selectedVideo.id) && quiz && (
-                                    <Button
-                                        className="h-14 px-8 font-black rounded-2xl text-lg bg-gradient-to-r from-yellow-400 to-orange-500 text-white shadow-xl shadow-orange-200 hover:scale-[1.02] transition-transform animate-pulse w-full sm:w-auto"
-                                        onClick={() => navigate(`/student/quiz?id=${quiz.id}`)}
-                                    >
-                                        Take Quiz: {quiz.title}
-                                    </Button>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

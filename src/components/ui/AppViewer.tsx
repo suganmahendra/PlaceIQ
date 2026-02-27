@@ -31,8 +31,11 @@ export function AppViewer({ initialContent }: ViewerProps) {
 
             // Try to parse as markdown for backward compatibility
             try {
+                // Fix for raw escaped strings sent from the database
+                const unescapedContent = initialContent.replace(/\\n/g, '\n');
+
                 const editor = BlockNoteEditor.create();
-                const blocks = await editor.tryParseMarkdownToBlocks(initialContent);
+                const blocks = await editor.tryParseMarkdownToBlocks(unescapedContent);
                 setInitialBlocks(blocks);
             } catch (e) {
                 setInitialBlocks(undefined);

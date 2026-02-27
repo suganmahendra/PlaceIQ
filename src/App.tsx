@@ -29,6 +29,7 @@ import { AIChatbotPage } from './pages/student/AIChatbotPage';
 import { ProfilePage } from './pages/student/ProfilePage';
 import { AnnouncementsPage } from './pages/student/AnnouncementsPage';
 import { CourseDetailPage } from './pages/student/CourseDetailPage';
+import { LessonPage } from './pages/student/LessonPage';
 import { RoadmapPage } from './pages/public/RoadmapPage';
 import { DashboardHome as MentorDashboard } from './pages/mentor/DashboardHome';
 import { CMSDashboard } from './pages/mentor/cms/CMSDashboard';
@@ -59,11 +60,11 @@ function App() {
               <Route path="/contact" element={<ContactPage />} />
             </Route >
 
-            {/* Protected Student Routes */}
-            < Route path="/student" element={
-              < AuthGuard allowedRoles={['student']} >
+            {/* Protected Student Routes (with Dashboard Layout) */}
+            <Route path="/student" element={
+              <AuthGuard allowedRoles={['student']} >
                 <DashboardLayout />
-              </AuthGuard >
+              </AuthGuard>
             }>
               <Route path="dashboard" element={<DashboardHome />} />
               <Route path="coding" element={<CodingHomePage />} />
@@ -78,7 +79,14 @@ function App() {
               <Route path="placements" element={<PlacementsPage />} />
               <Route path="announcements" element={<AnnouncementsPage />} />
               <Route path="profile" element={<ProfilePage />} />
-            </Route >
+            </Route>
+
+            {/* Standalone Fullscreen Student Routes */}
+            <Route path="/student/courses/:courseSlug/:lessonSlug" element={
+              <AuthGuard allowedRoles={['student']} >
+                <LessonPage />
+              </AuthGuard>
+            } />
 
             {/* Protected Mentor Routes */}
             < Route path="/mentor" element={
