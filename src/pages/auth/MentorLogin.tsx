@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { PasswordRecoveryModal } from '../../components/auth/PasswordRecoveryModal';
 import { AnimatedBackground } from '../../components/landing/AnimatedBackground';
 import {
     Award,
@@ -18,32 +17,30 @@ import { authService } from '../../services/authService';
 
 export function MentorLogin() {
     const navigate = useNavigate();
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const [formData, setFormData] = useState({
+        email: '',
+        password: '',
+    });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [isRecoveryOpen, setIsRecoveryOpen] = useState(false);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
 
         try {
-            const data = await authService.loginUser(email, password);
+            const data = await authService.signInUser(
+                formData.email,
+                formData.password,
+                'mentor'
+            );
 
             if (data.user) {
-                const role = await authService.fetchUserRole(data.user.id);
-
-                if (role && role !== 'mentor') {
-                    await authService.logoutUser();
-                    throw new Error('Please use the Student login page.');
-                }
-
                 navigate('/mentor/dashboard');
             }
         } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Invalid login credentials';
+            const message = err instanceof Error ? err.message : 'Login failed. Please try again.';
             setError(message);
             console.error('Login error:', err);
         } finally {
@@ -73,7 +70,7 @@ export function MentorLogin() {
                         <p className="text-text-secondary mt-2 font-medium">Empower the next generation of talent</p>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-5">
+                    <form onSubmit={handleLogin} className="space-y-5">
                         {error && (
                             <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl flex items-center gap-3 animate-shake">
                                 <AlertCircle className="w-5 h-5 flex-shrink-0" />
@@ -84,33 +81,28 @@ export function MentorLogin() {
                             label="Email Address"
                             type="email"
                             placeholder="mentor@organization.com"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            value={formData.email}
+                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                             icon={<Mail className="text-primary/60 w-5 h-5" />}
                             required
                             className="bg-white/50 border-white/60 focus:bg-white rounded-2xl h-14"
                         />
 
-                        <div className="space-y-2">
-                            <div className="flex items-center justify-between ml-1">
-                                <label className="text-sm font-semibold text-text-primary/80">Password</label>
-                                <button
-                                    type="button"
-                                    onClick={() => setIsRecoveryOpen(true)}
-                                    className="text-xs font-bold text-primary hover:text-primary-hover transition-colors"
-                                >
-                                    Forgot password?
-                                </button>
-                            </div>
-                            <Input
-                                type="password"
-                                placeholder="••••••••"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                icon={<Lock className="text-primary/60 w-5 h-5" />}
-                                required
-                                className="bg-white/50 border-white/60 focus:bg-white rounded-2xl h-14"
-                            />
+                        <Input
+                            label="Password"
+                            type="password"
+                            placeholder="••••••••"
+                            value={formData.password}
+                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                            icon={<Lock className="text-primary/60 w-5 h-5" />}
+                            required
+                            className="bg-white/50 border-white/60 focus:bg-white rounded-2xl h-14"
+                        />
+
+                        <div className="flex justify-end">
+                            <Link to="/forgot-password" className="text-primary font-bold hover:underline">
+                                Forgot password?
+                            </Link>
                         </div>
 
                         <Button
@@ -119,7 +111,7 @@ export function MentorLogin() {
                             isLoading={loading}
                         >
                             <span className="flex items-center justify-center gap-2 text-lg">
-                                Secure Login
+                                Sign In
                                 <ArrowRight className="w-5 h-5" />
                             </span>
                         </Button>
@@ -174,12 +166,6 @@ export function MentorLogin() {
                     </div>
                 </div>
             </div>
-
-            <PasswordRecoveryModal
-                isOpen={isRecoveryOpen}
-                onClose={() => setIsRecoveryOpen(false)}
-                userType="mentor"
-            />
         </div>
     );
 }

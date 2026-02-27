@@ -38,8 +38,8 @@ import { PhaseManager } from './pages/mentor/cms/PhaseManager';
 
 function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
+    <BrowserRouter>
+      <AuthProvider>
         <NotificationProvider>
           <ScrollToTop />
           <Routes>
@@ -102,8 +102,8 @@ function App() {
             </Route >
           </Routes >
         </NotificationProvider>
-      </BrowserRouter >
-    </AuthProvider >
+      </AuthProvider >
+    </BrowserRouter >
   );
 }
 

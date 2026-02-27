@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { OtpInput } from '../../components/ui/OtpInput';
 import { AnimatedBackground } from '../../components/landing/AnimatedBackground';
 import {
     User,
@@ -17,9 +18,11 @@ import {
 import { authService } from '../../services/authService';
 
 export function StudentRegister() {
+    const navigate = useNavigate();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isSuccess, setIsSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [step, setStep] = useState<1 | 2>(1);
+    const [otp, setOtp] = useState('');
     const [formData, setFormData] = useState({
         name: '',
         registerNumber: '',
@@ -29,18 +32,18 @@ export function StudentRegister() {
         department: 'AI & Data Science', // Default as per requirements
     });
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSendOtp = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
         setError(null);
 
-        if (formData.password !== formData.confirmPassword) {
-            setError("Passwords do not match");
-            setIsSubmitting(false);
-            return;
-        }
-
         try {
+            if (formData.password !== formData.confirmPassword) {
+                setError("Passwords do not match.");
+                setIsSubmitting(false);
+                return;
+            }
+
             // Check if user already exists
             const userExists = await authService.checkUserExists(formData.email);
             if (userExists) {
@@ -49,7 +52,7 @@ export function StudentRegister() {
                 return;
             }
 
-            await authService.registerStudent(
+            await authService.sendStudentOtp(
                 formData.email,
                 formData.password,
                 formData.name,
@@ -57,9 +60,7 @@ export function StudentRegister() {
                 formData.registerNumber
             );
 
-            // Handle success
-            setIsSuccess(true);
-            // No auto-redirect. User must check email.
+            setStep(2);
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : 'An error occurred during registration';
             setError(message);
@@ -69,33 +70,24 @@ export function StudentRegister() {
         }
     };
 
-    if (isSuccess) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-[#FAF5FF] relative overflow-hidden">
-                <AnimatedBackground />
-                <div className="glass-card w-full max-w-md p-8 rounded-3xl text-center space-y-6 animate-scale-in relative z-10 border-white/40">
-                    <div className="w-24 h-24 bg-gradient-to-tr from-primary to-accent-violet rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl shadow-primary/20 animate-bounce">
-                        <Mail className="w-12 h-12 text-white" />
-                    </div>
-                    <div>
-                        <h2 className="text-3xl font-bold text-text-primary mb-2">Check Your Email</h2>
-                        <p className="text-text-secondary">
-                            We've sent a verification link to <span className="font-bold text-primary">{formData.email}</span>. <br />
-                            Please verify your email to access your dashboard.
-                        </p>
-                    </div>
+    const handleVerifyOtp = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        setError(null);
 
-                    <div className="mt-6 p-4 bg-primary/5 rounded-xl border border-primary/10 text-sm text-text-muted">
-                        <p>Didn't receive the email? Check your spam folder.</p>
-                    </div>
+        try {
+            await authService.verifyOtp(formData.email, otp, 'signup');
+            navigate('/student/dashboard', { replace: true });
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Invalid code. Please try again.';
+            setError(message);
+            console.error('OTP Verification error:', err);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
-                    <Link to="/login" className="inline-block mt-4 text-primary font-bold hover:underline">
-                        Back to Login
-                    </Link>
-                </div>
-            </div>
-        );
-    }
+    // Removed isSuccess component
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-[#FAF5FF] p-4 pt-24 relative overflow-hidden">
@@ -119,111 +111,158 @@ export function StudentRegister() {
                         <p className="text-text-secondary font-medium">Create your AI-powered student profile</p>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        {error && (
-                            <div className={`border px-4 py-3 rounded-xl flex items-start gap-3 animate-shake ${error.includes('already registered')
-                                ? 'bg-blue-50 border-blue-200 text-blue-800'
-                                : 'bg-red-50 border-red-200 text-red-600'
-                                }`}>
-                                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                                <div className="flex-1">
-                                    <p className="text-sm font-medium">{error}</p>
-                                    {error.includes('already registered') && (
-                                        <Link to="/login" className="text-sm font-bold underline mt-1 inline-block hover:text-blue-600">
-                                            Click here to Sign In instead
-                                        </Link>
-                                    )}
+                    {step === 1 ? (
+                        <form onSubmit={handleSendOtp} className="space-y-6">
+                            {error && (
+                                <div className={`border px-4 py-3 rounded-xl flex items-start gap-3 animate-shake ${error.includes('already registered')
+                                    ? 'bg-blue-50 border-blue-200 text-blue-800'
+                                    : 'bg-red-50 border-red-200 text-red-600'
+                                    }`}>
+                                    <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                                    <div className="flex-1">
+                                        <p className="text-sm font-medium">{error}</p>
+                                        {error.includes('already registered') && (
+                                            <Link to="/login" className="text-sm font-bold underline mt-1 inline-block hover:text-blue-600">
+                                                Click here to Sign In instead
+                                            </Link>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        )}
-                        <div className="space-y-5">
-                            <Input
-                                label="Full Name"
-                                placeholder="E.g. Sugan Mahendra"
-                                value={formData.name}
-                                onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                icon={<User className="text-primary/60 w-5 h-5" />}
-                                required
-                                className="bg-white/50 border-white/60 focus:bg-white transition-all rounded-2xl h-14"
-                            />
+                            )}
+                            <div className="space-y-5">
+                                <Input
+                                    label="Full Name"
+                                    placeholder="E.g. Sugan Mahendra"
+                                    value={formData.name}
+                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                    icon={<User className="text-primary/60 w-5 h-5" />}
+                                    required
+                                    className="bg-white/50 border-white/60 focus:bg-white transition-all rounded-2xl h-14"
+                                />
 
-                            <Input
-                                label="Register Number"
-                                placeholder="621522243..."
-                                value={formData.registerNumber}
-                                onChange={e => setFormData({ ...formData, registerNumber: e.target.value })}
-                                icon={<ShieldCheck className="text-primary/60 w-5 h-5" />}
-                                required
-                                className="bg-white/50 border-white/60 focus:bg-white transition-all rounded-2xl h-14"
-                            />
+                                <Input
+                                    label="Register Number"
+                                    placeholder="621522243..."
+                                    value={formData.registerNumber}
+                                    onChange={e => setFormData({ ...formData, registerNumber: e.target.value })}
+                                    icon={<ShieldCheck className="text-primary/60 w-5 h-5" />}
+                                    required
+                                    className="bg-white/50 border-white/60 focus:bg-white transition-all rounded-2xl h-14"
+                                />
 
-                            <Input
-                                label="Email Address"
-                                type="email"
-                                placeholder="student@gmail.com"
-                                value={formData.email}
-                                onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                icon={<Mail className="text-primary/60 w-5 h-5" />}
-                                required
-                                className="bg-white/50 border-white/60 focus:bg-white transition-all rounded-2xl h-14"
-                            />
+                                <Input
+                                    label="Email Address"
+                                    type="email"
+                                    placeholder="student@gmail.com"
+                                    value={formData.email}
+                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                    icon={<Mail className="text-primary/60 w-5 h-5" />}
+                                    required
+                                    className="bg-white/50 border-white/60 focus:bg-white transition-all rounded-2xl h-14"
+                                />
 
-                            <Input
-                                label="Password"
-                                type="password"
-                                placeholder="Create a secure password"
-                                value={formData.password}
-                                onChange={e => setFormData({ ...formData, password: e.target.value })}
-                                icon={<Lock className="text-primary/60 w-5 h-5" />}
-                                required
-                                className="bg-white/50 border-white/60 focus:bg-white transition-all rounded-2xl h-14"
-                            />
+                                <Input
+                                    label="Password"
+                                    type="password"
+                                    placeholder="Create a strong password"
+                                    value={formData.password}
+                                    onChange={e => setFormData({ ...formData, password: e.target.value })}
+                                    icon={<Lock className="text-primary/60 w-5 h-5" />}
+                                    required
+                                    className="bg-white/50 border-white/60 focus:bg-white transition-all rounded-2xl h-14"
+                                />
 
-                            <Input
-                                label="Confirm Password"
-                                type="password"
-                                placeholder="Re-enter your password"
-                                value={formData.confirmPassword}
-                                onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
-                                icon={<Lock className="text-primary/60 w-5 h-5" />}
-                                required
-                                className={`bg-white/50 border-white/60 focus:bg-white transition-all rounded-2xl h-14 ${formData.confirmPassword && formData.password !== formData.confirmPassword ? 'border-red-400 focus:ring-red-200' : ''
-                                    }`}
-                            />
+                                <Input
+                                    label="Confirm Password"
+                                    type="password"
+                                    placeholder="Confirm your password"
+                                    value={formData.confirmPassword}
+                                    onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
+                                    icon={<Lock className="text-primary/60 w-5 h-5" />}
+                                    required
+                                    className="bg-white/50 border-white/60 focus:bg-white transition-all rounded-2xl h-14"
+                                />
 
-                            <div className="space-y-2">
-                                <label className="text-sm font-semibold text-text-primary/80 ml-1 flex items-center gap-2">
-                                    <Sparkles className="w-4 h-4 text-primary" />
-                                    Department
-                                </label>
-                                <div className="relative group">
-                                    <select
-                                        className="w-full h-14 p-4 rounded-2xl border border-white/60 bg-white/50 focus:bg-white focus:ring-4 focus:ring-primary/5 outline-none transition-all appearance-none text-text-primary text-sm font-medium"
-                                        value={formData.department}
-                                        onChange={e => setFormData({ ...formData, department: e.target.value })}
-                                    >
-                                        <option value="AI & Data Science">AI & Data Science (Recommended)</option>
-                                        <option value="Computer Science">Computer Science</option>
-                                        <option value="Information Technology">Information Technology</option>
-                                    </select>
-                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-primary/40">
-                                        <ArrowRight className="w-5 h-5 rotate-90" />
+                                <div className="space-y-2">
+                                    <label className="text-sm font-semibold text-text-primary/80 ml-1 flex items-center gap-2">
+                                        <Sparkles className="w-4 h-4 text-primary" />
+                                        Department
+                                    </label>
+                                    <div className="relative group">
+                                        <select
+                                            className="w-full h-14 p-4 rounded-2xl border border-white/60 bg-white/50 focus:bg-white focus:ring-4 focus:ring-primary/5 outline-none transition-all appearance-none text-text-primary text-sm font-medium"
+                                            value={formData.department}
+                                            onChange={e => setFormData({ ...formData, department: e.target.value })}
+                                        >
+                                            <option value="AI & Data Science">AI & Data Science (Recommended)</option>
+                                            <option value="Computer Science">Computer Science</option>
+                                            <option value="Information Technology">Information Technology</option>
+                                        </select>
+                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-primary/40">
+                                            <ArrowRight className="w-5 h-5 rotate-90" />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <Button
-                            type="submit"
-                            className="w-full h-14 bg-gradient-to-r from-primary to-accent-violet hover:from-primary-hover hover:to-accent-violet text-white font-bold rounded-2xl shadow-xl shadow-primary/25 transform hover:-translate-y-1 transition-all duration-300"
-                            isLoading={isSubmitting}
-                        >
-                            <span className="flex items-center justify-center gap-2">
-                                Create Student Account
-                                <ArrowRight className="w-5 h-5" />
-                            </span>
-                        </Button>
-                    </form>
+                            <Button
+                                type="submit"
+                                className="w-full h-14 bg-gradient-to-r from-primary to-accent-violet hover:from-primary-hover hover:to-accent-violet text-white font-bold rounded-2xl shadow-xl shadow-primary/25 transform hover:-translate-y-1 transition-all duration-300"
+                                isLoading={isSubmitting}
+                            >
+                                <span className="flex items-center justify-center gap-2">
+                                    Send Verification Code
+                                    <ArrowRight className="w-5 h-5" />
+                                </span>
+                            </Button>
+                        </form>
+                    ) : (
+                        <form onSubmit={handleVerifyOtp} className="space-y-6">
+                            {error && (
+                                <div className="border px-4 py-3 rounded-xl flex items-start gap-3 animate-shake bg-red-50 border-red-200 text-red-600">
+                                    <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                                    <div className="flex-1">
+                                        <p className="text-sm font-medium">{error}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="text-center mb-6">
+                                <p className="text-text-secondary">
+                                    Enter the 6-digit code sent to <span className="font-bold text-primary">{formData.email}</span>
+                                </p>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-semibold text-text-primary/80 ml-1 flex items-center gap-2">
+                                    <Lock className="w-4 h-4 text-primary" />
+                                    Verification Code
+                                </label>
+                                <OtpInput
+                                    value={otp}
+                                    onChange={setOtp}
+                                    error={!!error}
+                                />
+                            </div>
+
+                            <Button
+                                type="submit"
+                                className="w-full h-14 bg-gradient-to-r from-primary to-accent-violet hover:from-primary-hover hover:to-accent-violet text-white font-bold rounded-2xl shadow-xl shadow-primary/25 transform hover:-translate-y-1 transition-all duration-300"
+                                isLoading={isSubmitting}
+                            >
+                                <span className="flex items-center justify-center gap-2">
+                                    Verify & Create Account
+                                    <Sparkles className="w-5 h-5" />
+                                </span>
+                            </Button>
+
+                            <div className="text-center mt-4">
+                                <button type="button" onClick={() => setStep(1)} className="text-sm text-text-muted hover:text-primary font-medium transition-colors">
+                                    Back to edit details
+                                </button>
+                            </div>
+                        </form>
+                    )}
 
                     <div className="mt-8">
                         <div className="relative">

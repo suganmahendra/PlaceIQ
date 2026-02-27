@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { OtpInput } from '../../components/ui/OtpInput';
 import { AnimatedBackground } from '../../components/landing/AnimatedBackground';
 import {
     User,
@@ -18,9 +19,11 @@ import {
 import { authService } from '../../services/authService';
 
 export function MentorRegister() {
+    const navigate = useNavigate();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isSuccess, setIsSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [step, setStep] = useState<1 | 2>(1);
+    const [otp, setOtp] = useState('');
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -29,28 +32,34 @@ export function MentorRegister() {
         expertise: '',
     });
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSendOtp = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
         setError(null);
 
-        if (formData.password !== formData.confirmPassword) {
-            setError("Passwords do not match");
-            setIsSubmitting(false);
-            return;
-        }
-
         try {
-            await authService.registerMentor(
+            if (formData.password !== formData.confirmPassword) {
+                setError("Passwords do not match.");
+                setIsSubmitting(false);
+                return;
+            }
+
+            // Check if user already exists
+            const userExists = await authService.checkUserExists(formData.email);
+            if (userExists) {
+                setError("User already registered. Please sign in.");
+                setIsSubmitting(false);
+                return;
+            }
+
+            await authService.sendMentorOtp(
                 formData.email,
                 formData.password,
                 formData.name,
                 formData.expertise
             );
 
-            // Handle success
-            setIsSuccess(true);
-            // No auto-redirect. User must check email.
+            setStep(2);
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : 'An error occurred during registration';
             setError(message);
@@ -60,33 +69,24 @@ export function MentorRegister() {
         }
     };
 
-    if (isSuccess) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-[#FAF5FF] relative overflow-hidden">
-                <AnimatedBackground />
-                <div className="glass-card w-full max-w-md p-8 rounded-3xl text-center space-y-6 animate-scale-in relative z-10 border-white/40">
-                    <div className="w-24 h-24 bg-gradient-to-tr from-primary to-accent-violet rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl shadow-primary/20 animate-bounce">
-                        <Mail className="w-12 h-12 text-white" />
-                    </div>
-                    <div>
-                        <h2 className="text-3xl font-bold text-text-primary mb-2">Check Your Email</h2>
-                        <p className="text-text-secondary">
-                            We've sent a verification link to <span className="font-bold text-primary">{formData.email}</span>. <br />
-                            Please verify your professional email to secure your mentor account.
-                        </p>
-                    </div>
+    const handleVerifyOtp = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        setError(null);
 
-                    <div className="mt-6 p-4 bg-primary/5 rounded-xl border border-primary/10 text-sm text-text-muted">
-                        <p>Didn't receive the email? Check your spam folder.</p>
-                    </div>
+        try {
+            await authService.verifyOtp(formData.email, otp, 'signup');
+            navigate('/mentor/dashboard', { replace: true });
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Invalid code. Please try again.';
+            setError(message);
+            console.error('OTP Verification error:', err);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
-                    <Link to="/login-mentor" className="inline-block mt-4 text-primary font-bold hover:underline">
-                        Back to Mentor Login
-                    </Link>
-                </div>
-            </div>
-        );
-    }
+    // Removed isSuccess component
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-[#FAF5FF] p-4 pt-24 relative overflow-hidden">
@@ -112,80 +112,127 @@ export function MentorRegister() {
                         <p className="text-text-secondary font-medium text-sm">Share your expertise with the next generation of AI leaders</p>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        {error && (
-                            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl flex items-center gap-3 animate-shake">
-                                <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                                <p className="text-sm font-medium">{error}</p>
+                    {step === 1 ? (
+                        <form onSubmit={handleSendOtp} className="space-y-6">
+                            {error && (
+                                <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl flex items-center gap-3 animate-shake">
+                                    <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                                    <p className="text-sm font-medium">{error}</p>
+                                </div>
+                            )}
+                            <div className="space-y-4">
+                                <Input
+                                    label="Full Name"
+                                    placeholder="Dr. Sarah Johnson"
+                                    value={formData.name}
+                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                    icon={<User className="text-primary/60 w-5 h-5" />}
+                                    required
+                                    className="bg-white/40 border-white/60 focus:bg-white rounded-2xl h-14"
+                                />
+
+                                <Input
+                                    label="Work Email"
+                                    type="email"
+                                    placeholder="name@mahendracollege.com"
+                                    value={formData.email}
+                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                    icon={<Mail className="text-primary/60 w-5 h-5" />}
+                                    required
+                                    className="bg-white/40 border-white/60 focus:bg-white rounded-2xl h-14"
+                                />
+
+                                <Input
+                                    label="Password"
+                                    type="password"
+                                    placeholder="Create a strong password"
+                                    value={formData.password}
+                                    onChange={e => setFormData({ ...formData, password: e.target.value })}
+                                    icon={<Lock className="text-primary/60 w-5 h-5" />}
+                                    required
+                                    className="bg-white/40 border-white/60 focus:bg-white rounded-2xl h-14"
+                                />
+
+                                <Input
+                                    label="Confirm Password"
+                                    type="password"
+                                    placeholder="Confirm your password"
+                                    value={formData.confirmPassword}
+                                    onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
+                                    icon={<Lock className="text-primary/60 w-5 h-5" />}
+                                    required
+                                    className="bg-white/40 border-white/60 focus:bg-white rounded-2xl h-14"
+                                />
+
+                                <Input
+                                    label="Area of Expertise"
+                                    placeholder="E.g. Machine Learning, NLP, Data Engineering"
+                                    value={formData.expertise}
+                                    onChange={e => setFormData({ ...formData, expertise: e.target.value })}
+                                    icon={<Briefcase className="text-primary/60 w-5 h-5" />}
+                                    required
+                                    className="bg-white/40 border-white/60 focus:bg-white rounded-2xl h-14"
+                                />
                             </div>
-                        )}
-                        <div className="space-y-4">
-                            <Input
-                                label="Full Name"
-                                placeholder="Dr. Sarah Johnson"
-                                value={formData.name}
-                                onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                icon={<User className="text-primary/60 w-5 h-5" />}
-                                required
-                                className="bg-white/40 border-white/60 focus:bg-white rounded-2xl h-14"
-                            />
 
-                            <Input
-                                label="Work Email"
-                                type="email"
-                                placeholder="name@mahendracollege.com"
-                                value={formData.email}
-                                onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                icon={<Mail className="text-primary/60 w-5 h-5" />}
-                                required
-                                className="bg-white/40 border-white/60 focus:bg-white rounded-2xl h-14"
-                            />
+                            <Button
+                                type="submit"
+                                className="w-full h-14 bg-text-primary hover:bg-black text-white font-bold rounded-2xl shadow-xl transform hover:-translate-y-1 transition-all duration-300 mt-4"
+                                isLoading={isSubmitting}
+                            >
+                                <span className="flex items-center justify-center gap-2">
+                                    Send Verification Code
+                                    <ArrowRight className="w-5 h-5" />
+                                </span>
+                            </Button>
+                        </form>
+                    ) : (
+                        <form onSubmit={handleVerifyOtp} className="space-y-6">
+                            {error && (
+                                <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl flex items-center gap-3 animate-shake">
+                                    <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                                    <div className="flex-1">
+                                        <p className="text-sm font-medium">{error}</p>
+                                    </div>
+                                </div>
+                            )}
 
-                            <Input
-                                label="Password"
-                                type="password"
-                                placeholder="Create your secure access"
-                                value={formData.password}
-                                onChange={e => setFormData({ ...formData, password: e.target.value })}
-                                icon={<Lock className="text-primary/60 w-5 h-5" />}
-                                required
-                                className="bg-white/40 border-white/60 focus:bg-white rounded-2xl h-14"
-                            />
+                            <div className="text-center mb-6">
+                                <p className="text-text-secondary">
+                                    Enter the 6-digit code sent to <span className="font-bold text-primary">{formData.email}</span>
+                                </p>
+                            </div>
 
-                            <Input
-                                label="Confirm Password"
-                                type="password"
-                                placeholder="Re-enter your password"
-                                value={formData.confirmPassword}
-                                onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
-                                icon={<Lock className="text-primary/60 w-5 h-5" />}
-                                required
-                                className={`bg-white/40 border-white/60 focus:bg-white rounded-2xl h-14 ${formData.confirmPassword && formData.password !== formData.confirmPassword ? 'border-red-400 focus:ring-red-200' : ''
-                                    }`}
-                            />
+                            <div className="space-y-2">
+                                <label className="text-sm font-semibold text-text-primary/80 ml-1 flex items-center gap-2">
+                                    <Lock className="w-4 h-4 text-primary" />
+                                    Verification Code
+                                </label>
+                                <OtpInput
+                                    value={otp}
+                                    onChange={setOtp}
+                                    error={!!error}
+                                />
+                            </div>
 
-                            <Input
-                                label="Area of Expertise"
-                                placeholder="E.g. Machine Learning, NLP, Data Engineering"
-                                value={formData.expertise}
-                                onChange={e => setFormData({ ...formData, expertise: e.target.value })}
-                                icon={<Briefcase className="text-primary/60 w-5 h-5" />}
-                                required
-                                className="bg-white/40 border-white/60 focus:bg-white rounded-2xl h-14"
-                            />
-                        </div>
+                            <Button
+                                type="submit"
+                                className="w-full h-14 bg-text-primary hover:bg-black text-white font-bold rounded-2xl shadow-xl transform hover:-translate-y-1 transition-all duration-300 mt-4"
+                                isLoading={isSubmitting}
+                            >
+                                <span className="flex items-center justify-center gap-2">
+                                    Verify & Create Account
+                                    <Star className="w-5 h-5" />
+                                </span>
+                            </Button>
 
-                        <Button
-                            type="submit"
-                            className="w-full h-14 bg-text-primary hover:bg-black text-white font-bold rounded-2xl shadow-xl transform hover:-translate-y-1 transition-all duration-300 mt-4"
-                            isLoading={isSubmitting}
-                        >
-                            <span className="flex items-center justify-center gap-2">
-                                Complete Mentor Registration
-                                <ArrowRight className="w-5 h-5" />
-                            </span>
-                        </Button>
-                    </form>
+                            <div className="text-center mt-4">
+                                <button type="button" onClick={() => setStep(1)} className="text-sm text-text-muted hover:text-primary font-medium transition-colors">
+                                    Back to edit details
+                                </button>
+                            </div>
+                        </form>
+                    )}
 
                     <div className="mt-8">
                         <div className="relative">

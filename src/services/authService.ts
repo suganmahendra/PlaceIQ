@@ -10,10 +10,7 @@ export interface SecurityEvent {
 }
 
 export const authService = {
-    /**
-     * Register a new student
-     */
-    async registerStudent(
+    async sendStudentOtp(
         email: string,
         password: string,
         fullName: string,
@@ -30,24 +27,30 @@ export const authService = {
                         role: 'student',
                         department: department,
                         register_number: registerNumber
-                    },
-                    emailRedirectTo: `${window.location.origin}/auth/callback`,
+                    }
                 },
             });
 
             if (error) {
+                console.error("Supabase Auth API Error Details:");
+                console.error("- Message:", error.message);
+                console.error("- Name:", error.name);
+                console.error("- Status:", error.status);
+                // @ts-ignore
+                if (error.code) console.error("- Code:", error.code);
+
+                if (error.message.includes('Error sending confirmation email')) {
+                    throw new Error('Supabase failed to send the email through Brevo. IMPORTANT: Supabase hides the exact reason for security. To see the exact reason Brevo rejected the email, go to your Supabase Dashboard -> Logs -> Auth.');
+                }
+
                 if (error.message.includes('Failed to fetch')) {
                     throw new Error('Network error: Please check your internet connection, disable ad-blockers, or try a different network.');
                 }
                 throw error;
             }
-            // Check for session to ensure we don't return false success if session is missing (verification required)
-            if (data.user && !data.session) {
-                // Verification required
-                return { user: data.user, session: null, verificationRequired: true };
-            }
             return data;
         } catch (err: any) {
+            console.error('Catch Block Error (Full Object):', err);
             if (err.message && err.message.includes('Failed to fetch')) {
                 throw new Error('Network error: Unable to connect to the authentication server. Please check your internet connection, disable any ad-blockers/VPN, or try a different network.');
             }
@@ -56,9 +59,9 @@ export const authService = {
     },
 
     /**
-     * Register a new mentor
+     * Send OTP to register a new mentor
      */
-    async registerMentor(email: string, password: string, fullName: string, expertise: string) {
+    async sendMentorOtp(email: string, password: string, fullName: string, expertise: string) {
         try {
             const { data, error } = await supabase.auth.signUp({
                 email,
@@ -68,22 +71,30 @@ export const authService = {
                         full_name: fullName,
                         role: 'mentor',
                         expertise: expertise,
-                    },
-                    emailRedirectTo: `${window.location.origin}/auth/callback`,
+                    }
                 },
             });
 
             if (error) {
+                console.error("Supabase Auth API Error Details:");
+                console.error("- Message:", error.message);
+                console.error("- Name:", error.name);
+                console.error("- Status:", error.status);
+                // @ts-ignore
+                if (error.code) console.error("- Code:", error.code);
+
+                if (error.message.includes('Error sending confirmation email')) {
+                    throw new Error('Supabase failed to send the email through Brevo. IMPORTANT: Supabase hides the exact reason for security. To see the exact reason Brevo rejected the email, go to your Supabase Dashboard -> Logs -> Auth.');
+                }
+
                 if (error.message.includes('Failed to fetch')) {
                     throw new Error('Network error: Please check your internet connection, disable ad-blockers, or try a different network.');
                 }
                 throw error;
             }
-            if (data.user && !data.session) {
-                return { user: data.user, session: null, verificationRequired: true };
-            }
             return data;
         } catch (err: any) {
+            console.error('Catch Block Error (Full Object):', err);
             if (err.message && err.message.includes('Failed to fetch')) {
                 throw new Error('Network error: Unable to connect to the authentication server. Please check your internet connection, disable any ad-blockers/VPN, or try a different network.');
             }
@@ -130,40 +141,80 @@ export const authService = {
     },
 
     /**
-     * Login user
+     * Sign in with Password
      */
-    async loginUser(email: string, password: string) {
-        try {
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email,
-                password,
-            });
+    async signInUser(email: string, password: string, expectedRole: 'student' | 'mentor', registerNumber?: string) {
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+        });
 
-            if (error) {
-                if (error.message.includes('Email not confirmed')) {
-                    throw new Error('Please verify your email address before signing in.');
-                }
-                if (error.message.includes('Invalid login credentials')) {
-                    throw new Error('Invalid email or password. Please try again.');
-                }
-                if (error.message.includes('Failed to fetch')) {
-                    throw new Error('Connection error: Please check your internet or Supabase configuration.');
-                }
-                throw error;
+        if (error) {
+            if (error.message.includes('Invalid login credentials')) {
+                throw new Error('Incorrect email or password.');
             }
-
-            // Fetch role after login
-            if (data.user) {
-                await this.trackSecurityEvent(data.user.id, 'login');
-                const role = await this.fetchUserRole(data.user.id);
-                return { ...data, role };
+            if (error.message.includes('Email not confirmed')) {
+                throw new Error('Please verify your email address before signing in.');
             }
-
-            return data;
-        } catch (err) {
-            console.error('Login implementation error:', err);
-            throw err;
+            if (error.message.includes('Failed to fetch')) {
+                throw new Error('Connection error: Please check your internet or Supabase configuration.');
+            }
+            throw error;
         }
+
+        if (data.user) {
+            const role = await this.fetchUserRole(data.user.id);
+
+            if (expectedRole === 'student' && role && role !== 'student') {
+                await this.logoutUser();
+                throw new Error('Please use the Mentor login page.');
+            }
+            if (expectedRole === 'mentor' && role && role !== 'mentor') {
+                await this.logoutUser();
+                throw new Error('Please use the Student login page.');
+            }
+
+            // Additional verification for students
+            if (expectedRole === 'student' && registerNumber) {
+                const { data: studentData, error: studentError } = await supabase
+                    .from('students')
+                    .select('register_number')
+                    .eq('user_id', data.user.id)
+                    .single();
+
+                if (studentError || !studentData || studentData.register_number !== registerNumber) {
+                    await this.logoutUser();
+                    throw new Error('Invalid registration number for this account.');
+                }
+            }
+
+            await this.trackSecurityEvent(data.user.id, 'login');
+            return { ...data, role };
+        }
+
+        return data;
+    },
+
+    /**
+     * Verify OTP
+     */
+    async verifyOtp(email: string, token: string, type: 'email' | 'magiclink' | 'signup' = 'signup') {
+        const { data, error } = await supabase.auth.verifyOtp({
+            email,
+            token,
+            // @ts-ignore
+            type,
+        });
+
+        if (error) throw error;
+
+        if (data.user) {
+            await this.trackSecurityEvent(data.user.id, 'register');
+            const role = await this.fetchUserRole(data.user.id);
+            return { ...data, role };
+        }
+
+        return data;
     },
 
     /**
@@ -264,17 +315,39 @@ export const authService = {
      * Check if user exists (RPC)
      */
     async checkUserExists(email: string) {
-        // @ts-expect-error - RPC function is not yet in generated types
-        const { data, error } = await supabase.rpc('check_user_exists', {
-            email_to_check: email
-        });
+        // 1. Primary Method: RPC (Securely checks auth.users)
+        try {
+            // @ts-expect-error - RPC function might not be in types
+            const { data, error } = await supabase.rpc('check_user_exists', {
+                email_to_check: email
+            });
 
-        // If RPC is missing or fails, default to false (let standard flow handle it)
-        if (error) {
-            console.warn('Error checking user existence:', error);
-            return false;
+            if (!error) return data;
+
+            if (error.code === 'PGRST202') {
+                console.warn('RPC check_user_exists not found. Falling back to public profile check...');
+            } else {
+                console.warn('RPC check_user_exists error:', error);
+            }
+        } catch (e) {
+            console.error('RPC call fatal error:', e);
         }
-        return data;
+
+        // 2. Fallback Method: Check public profiles table
+        // Note: This only works if the user was already verified and a profile was created.
+        try {
+            const { data } = await supabase
+                .from('profiles')
+                .select('email')
+                .eq('email', email)
+                .maybeSingle();
+
+            if (data) return true;
+        } catch (e) {
+            // Profiles might be RLS protected, so we just continue
+        }
+
+        return false;
     },
 
     /**
