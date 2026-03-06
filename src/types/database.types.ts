@@ -384,6 +384,7 @@ export interface Database {
                     title: string
                     passing_score: number
                     time_limit_mins: number
+                    is_mandatory: boolean
                     created_at: string
                 }
                 Insert: {
@@ -393,6 +394,7 @@ export interface Database {
                     title: string
                     passing_score?: number
                     time_limit_mins?: number
+                    is_mandatory?: boolean
                     created_at?: string
                 }
                 Update: {
@@ -402,6 +404,7 @@ export interface Database {
                     title?: string
                     passing_score?: number
                     time_limit_mins?: number
+                    is_mandatory?: boolean
                     created_at?: string
                 }
                 Relationships: []

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { CreateAnnouncementForm } from '../../components/dashboard/CreateAnnouncementForm';
+import { CreateStandaloneQuizPanel } from '../../components/dashboard/CreateStandaloneQuizPanel';
 import { AnnouncementsList } from '../../components/dashboard/AnnouncementsList';
 import { useAuth } from '../../contexts/AuthContext';
 import { Globe } from 'lucide-react';
@@ -18,9 +19,10 @@ export function DashboardHome() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Create Announcement */}
-                <div className="space-y-6">
+                {/* Create Announcement and Quizzes */}
+                <div className="space-y-8">
                     <CreateAnnouncementForm onCreated={() => setRefreshCount(prev => prev + 1)} />
+                    <CreateStandaloneQuizPanel />
                 </div>
 
                 {/* Existing Announcements Preview */}

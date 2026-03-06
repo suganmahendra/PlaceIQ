@@ -35,6 +35,7 @@ import { DashboardHome as MentorDashboard } from './pages/mentor/DashboardHome';
 import { CMSDashboard } from './pages/mentor/cms/CMSDashboard';
 import { RoadmapEditor } from './pages/mentor/cms/RoadmapEditor';
 import { PhaseManager } from './pages/mentor/cms/PhaseManager';
+import { QuizPage } from './pages/student/QuizPage';
 
 function App() {
   return (
@@ -73,7 +74,7 @@ function App() {
               <Route path="courses" element={<CoursesHomePage />} />
               <Route path="courses/:slug" element={<CourseDetailPage />} />
               <Route path="learning" element={<LearningPathPage />} />
-              <Route path="quiz" element={<div className="p-10 text-center text-gray-500">Quiz Page</div>} />
+              <Route path="quiz" element={<QuizPage />} />
               <Route path="analytics" element={<AnalyticsPage />} />
               <Route path="ai-chat" element={<AIChatbotPage />} />
               <Route path="placements" element={<PlacementsPage />} />

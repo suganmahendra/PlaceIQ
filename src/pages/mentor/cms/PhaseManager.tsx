@@ -5,6 +5,7 @@ import { cmsService, type CourseLesson } from '../../../services/cmsService';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { AppEditor } from '../../../components/ui/AppEditor';
+import { QuizManager } from './QuizManager';
 
 export function PhaseManager() {
     const { moduleId } = useParams<{ moduleId: string }>();
@@ -158,6 +159,9 @@ export function PhaseManager() {
                                     onSave={handleSaveLesson}
                                     onCancel={() => setEditingLessonId(null)}
                                 />
+                                <div className="mt-8 border-t border-gray-200 pt-8">
+                                    <QuizManager lessonId={lesson.id} moduleId={moduleId!} />
+                                </div>
                             </div>
                         ) : (
                             <div className="bg-white p-3 sm:p-4 rounded-xl border border-gray-200 hover:border-primary/30 transition-colors flex items-center justify-between gap-2">
