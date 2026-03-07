@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { GraduationCap, Briefcase, ArrowRight, UserCheck, ShieldCheck } from 'lucide-react';
+import { Briefcase, ArrowRight, UserCheck, ShieldCheck } from 'lucide-react';
 
 export function RegisterSelection() {
     return (
@@ -45,52 +45,13 @@ export function RegisterSelection() {
                 </motion.div>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-8 max-w-5xl w-full">
-                {/* Student Card */}
-                <motion.div
-                    initial={{ opacity: 0, x: -50 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.2, duration: 0.6 }}
-                >
-                    <Link to="/register-student" className="group block h-full">
-                        <div className="glass-panel h-full p-10 rounded-[3rem] border-primary/10 hover:border-primary/40 transition-all duration-500 relative overflow-hidden group-hover:-translate-y-2 group-hover:shadow-2xl group-hover:shadow-primary/10">
-                            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-                                <GraduationCap className="w-56 h-56 text-primary" />
-                            </div>
-
-                            <div className="relative z-10 h-full flex flex-col">
-                                <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-500 shadow-xl shadow-primary/5">
-                                    <UserCheck className="w-8 h-8" />
-                                </div>
-
-                                <div className="mt-8">
-                                    <h2 className="text-3xl font-bold mb-4">Student</h2>
-                                    <p className="text-text-secondary leading-relaxed mb-8">
-                                        Personalized learning paths, AI-driven mock interviews, and direct access to top recruiters.
-                                    </p>
-                                </div>
-
-                                <ul className="space-y-4 mb-10 mt-auto">
-                                    {['Personalized Roadmaps', 'AI Mock Interviews', 'Company Specific Prep'].map((feat) => (
-                                        <li key={feat} className="flex items-center gap-3 text-sm font-semibold text-text-secondary">
-                                            <div className="w-2 h-2 rounded-full bg-primary" /> {feat}
-                                        </li>
-                                    ))}
-                                </ul>
-
-                                <div className="pt-6 flex items-center gap-2 text-primary font-bold group-hover:gap-4 transition-all">
-                                    Register as Student <ArrowRight className="w-5 h-5" />
-                                </div>
-                            </div>
-                        </div>
-                    </Link>
-                </motion.div>
-
+            <div className="flex justify-center max-w-lg mx-auto w-full">
                 {/* Mentor Card */}
                 <motion.div
-                    initial={{ opacity: 0, x: 50 }}
-                    animate={{ opacity: 1, x: 0 }}
+                    initial={{ opacity: 0, y: 50 }}
+                    animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3, duration: 0.6 }}
+                    className="w-full"
                 >
                     <Link to="/register-mentor" className="group block h-full">
                         <div className="glass-panel h-full p-10 rounded-[3rem] border-accent/10 hover:border-accent/40 transition-all duration-500 relative overflow-hidden group-hover:-translate-y-2 group-hover:shadow-2xl group-hover:shadow-accent/10">

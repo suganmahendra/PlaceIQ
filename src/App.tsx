@@ -6,7 +6,6 @@ import { ScrollToTop } from './components/layout/ScrollToTop';
 import { PublicLayout } from './layouts/PublicLayout';
 import { DashboardLayout } from './layouts/DashboardLayout';
 import { LandingPage } from './pages/public/LandingPage';
-import { StudentRegister } from './pages/auth/StudentRegister';
 import { StudentLogin } from './pages/auth/StudentLogin';
 import { MentorLogin } from './pages/auth/MentorLogin';
 import { RegisterSelection } from './pages/auth/RegisterSelection';
@@ -35,6 +34,7 @@ import { DashboardHome as MentorDashboard } from './pages/mentor/DashboardHome';
 import { CMSDashboard } from './pages/mentor/cms/CMSDashboard';
 import { RoadmapEditor } from './pages/mentor/cms/RoadmapEditor';
 import { PhaseManager } from './pages/mentor/cms/PhaseManager';
+import { StudentManager } from './pages/mentor/cms/StudentManager';
 import { QuizPage } from './pages/student/QuizPage';
 
 function App() {
@@ -47,7 +47,6 @@ function App() {
             <Route element={<PublicLayout />}>
               <Route path="/" element={<LandingPage />} />
               <Route path="/register" element={<RegisterSelection />} />
-              <Route path="/register-student" element={<StudentRegister />} />
               <Route path="/login" element={<StudentLogin />} />
               <Route path="/login-mentor" element={<MentorLogin />} />
               <Route path="/register-mentor" element={<MentorRegister />} />
@@ -100,6 +99,7 @@ function App() {
               <Route path="cms/new" element={<RoadmapEditor />} />
               <Route path="cms/roadmap/:id" element={<RoadmapEditor />} />
               <Route path="cms/phases/:moduleId" element={<PhaseManager />} />
+              <Route path="cms/students" element={<StudentManager />} />
             </Route >
           </Routes >
         </NotificationProvider>

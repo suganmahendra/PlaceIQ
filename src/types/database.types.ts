@@ -670,6 +670,86 @@ export interface Database {
                         referencedColumns: ["id"]
                     }
                 ]
+            },
+            pre_registered_students: {
+                Row: {
+                    id: string
+                    register_number: string
+                    full_name: string
+                    email: string
+                    department: string | null
+                    added_by: string
+                    is_activated: boolean
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    register_number: string
+                    full_name: string
+                    email: string
+                    department?: string | null
+                    added_by: string
+                    is_activated?: boolean
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    register_number?: string
+                    full_name?: string
+                    email?: string
+                    department?: string | null
+                    added_by?: string
+                    is_activated?: boolean
+                    created_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "pre_registered_students_added_by_fkey"
+                        columns: ["added_by"]
+                        referencedRelation: "users"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            },
+            password_reset_otps: {
+                Row: {
+                    id: string
+                    user_id: string
+                    email: string
+                    otp_hash: string
+                    otp_code: string
+                    expires_at: string
+                    is_used: boolean
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    user_id: string
+                    email: string
+                    otp_hash: string
+                    otp_code: string
+                    expires_at: string
+                    is_used?: boolean
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    user_id?: string
+                    email?: string
+                    otp_hash?: string
+                    otp_code?: string
+                    expires_at?: string
+                    is_used?: boolean
+                    created_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "password_reset_otps_user_id_fkey"
+                        columns: ["user_id"]
+                        referencedRelation: "users"
+                        referencedColumns: ["id"]
+                    }
+                ]
             }
         }
         Views: {

@@ -3,27 +3,35 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { AnimatedBackground } from '../../components/landing/AnimatedBackground';
+import { supabase } from '../../lib/supabase';
+import { emailService } from '../../services/emailService';
 
 import {
     BrainCircuit,
-    Mail,
     Lock,
     ArrowRight,
-    Chrome,
     Fingerprint,
-    AlertCircle
+    AlertCircle,
+    KeyRound,
+    X
 } from 'lucide-react';
 import { authService } from '../../services/authService';
 
 export function StudentLogin() {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
-        email: '',
-        password: '',
         registerNumber: '',
+        password: '',
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    // Request Access Modal State
+    const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
+    const [requestRegNum, setRequestRegNum] = useState('');
+    const [requestLoading, setRequestLoading] = useState(false);
+    const [requestError, setRequestError] = useState<string | null>(null);
+    const [requestSuccess, setRequestSuccess] = useState<string | null>(null);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -31,8 +39,20 @@ export function StudentLogin() {
         setError(null);
 
         try {
+            // Look up the email in pre_registered_students since it has a public read policy
+            // Anonymous users cannot query the students table due to RLS
+            const { data: studentData, error: studentError } = await supabase
+                .from('pre_registered_students')
+                .select('email')
+                .eq('register_number', formData.registerNumber)
+                .single();
+
+            if (studentError || !studentData) {
+                throw new Error("Invalid Register Number. Please Request Access or check your Register Number.");
+            }
+
             const data = await authService.signInUser(
-                formData.email,
+                studentData.email,
                 formData.password,
                 'student',
                 formData.registerNumber
@@ -47,6 +67,105 @@ export function StudentLogin() {
             console.error('Login error:', err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleRequestAccess = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setRequestLoading(true);
+        setRequestError(null);
+        setRequestSuccess(null);
+
+        try {
+            if (!requestRegNum) throw new Error("Please enter your Register Number.");
+
+            // 1. Check if Register Number exists in pre_registered_students
+            const { data: preRegStudent, error: fetchErr } = await supabase
+                .from('pre_registered_students')
+                .select('*')
+                .eq('register_number', requestRegNum)
+                .single();
+
+            if (fetchErr || !preRegStudent) {
+                throw new Error("Register number not found. Please tell your mentor to add you in.");
+            }
+
+            if (preRegStudent.is_activated) {
+                throw new Error("Access already activated. Please log in with your credentials or reset your password.");
+            }
+
+            // 2. Generate random password
+            const randomPassword = Math.random().toString(36).slice(-8) + 'A1!';
+
+            // 3. Create Supabase Auth User
+            // We use standard signup for this. The mentor didn't create the auth user, only the pre-registration record.
+            // Using authService.sendStudentOtp but we don't really want them to require email confirmation to log in if we already verified through Mentor.
+            // Assuming Supabase signup behaves properly. If email confirmation is enabled, it sends an email anyway.
+
+            const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
+                email: preRegStudent.email,
+                password: randomPassword,
+                options: {
+                    data: {
+                        full_name: preRegStudent.full_name,
+                        role: 'student',
+                        department: preRegStudent.department,
+                        register_number: preRegStudent.register_number
+                    }
+                }
+            });
+
+            if (signUpErr) {
+                if (signUpErr.message.toLowerCase().includes('already registered')) {
+                    throw new Error("You have already been registered! If you didn't receive the email, please use the 'Forgot Password' link on the login page to reset your password.");
+                }
+                throw new Error(signUpErr.message);
+            }
+
+            // Immediately ensure the `students` table has the `register_number` populated
+            // before we log the user out, as the backend trigger doesn't copy it.
+            if (signUpData.user) {
+                await supabase.from('students').upsert({
+                    user_id: signUpData.user.id,
+                    full_name: preRegStudent.full_name,
+                    email: preRegStudent.email,
+                    register_number: preRegStudent.register_number,
+                    department_id: null,
+                    level: 'Beginner',
+                    xp: 0,
+                    readiness_score: 0,
+                    profile_completion: 20
+                }, { onConflict: 'user_id' });
+            }
+
+            // 4. Mark pre-registered student as activated via secure RPC to bypass RLS for anonymous users
+            await (supabase.rpc as any)('activate_pre_registered_student', {
+                p_register_number: preRegStudent.register_number
+            });
+
+            // Supabase automatically logs in the user after signUp if email confirmation is disabled.
+            // We need to immediately sign them out so they are forced to log in themselves with their new credentials.
+            await supabase.auth.signOut();
+
+            // 5. Send Email via Brevo with credentials
+            const emailResult = await emailService.sendStudentCredentials(
+                preRegStudent.email,
+                preRegStudent.full_name,
+                randomPassword,
+                preRegStudent.register_number
+            );
+
+            if (emailResult.mocked) {
+                setRequestSuccess(`[LOCAL TEST MODE] Email Mocked! Your generated password is: ${randomPassword}`);
+            } else {
+                setRequestSuccess(`Password Credentials have been sent to your ${preRegStudent.email}`);
+            }
+            setRequestRegNum('');
+
+        } catch (err: any) {
+            setRequestError(err.message || "Failed to process access request.");
+        } finally {
+            setRequestLoading(false);
         }
     };
 
@@ -78,16 +197,16 @@ export function StudentLogin() {
                 </div>
 
                 <div className="w-full max-w-[550px] flex-shrink-0">
-                    <div className="glass-card rounded-[32px] shadow-2xl p-8 border border-white/50 backdrop-blur-2xl">
+                    <div className="glass-card rounded-[32px] shadow-2xl p-6 sm:p-8 border border-white/50 backdrop-blur-2xl">
 
-                        <div className="text-center mb-10">
+                        <div className="text-center mb-8 sm:mb-10">
                             <Link to="/" className="inline-flex items-center gap-3 mb-6 group">
                                 <div className="bg-gradient-to-tr from-primary to-accent-violet p-3 rounded-2xl group-hover:scale-110 transition-transform duration-500 shadow-lg shadow-primary/20">
                                     <BrainCircuit className="w-8 h-8 text-white" />
                                 </div>
                                 <span className="text-3xl font-black text-text-primary tracking-tighter">PlaceIQ</span>
                             </Link>
-                            <h2 className="text-3xl font-extrabold text-text-primary">Welcome Back</h2>
+                            <h2 className="text-3xl font-extrabold text-text-primary">Student Login</h2>
                             <p className="text-text-secondary mt-2 font-medium">Continue your AI journey</p>
                         </div>
 
@@ -110,17 +229,6 @@ export function StudentLogin() {
                             />
 
                             <Input
-                                label="Email Address"
-                                type="email"
-                                placeholder="student@gmail.com"
-                                value={formData.email}
-                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                icon={<Mail className="text-primary/60 w-5 h-5" />}
-                                required
-                                className="bg-white/50 border-white/60 focus:bg-white rounded-2xl h-14"
-                            />
-
-                            <Input
                                 label="Password"
                                 type="password"
                                 placeholder="••••••••"
@@ -131,8 +239,8 @@ export function StudentLogin() {
                                 className="bg-white/50 border-white/60 focus:bg-white rounded-2xl h-14"
                             />
 
-                            <div className="flex justify-end">
-                                <Link to="/forgot-password" className="text-primary font-bold hover:underline">
+                            <div className="flex justify-end items-center">
+                                <Link to="/auth/update-password" className="text-primary font-bold hover:underline text-sm">
                                     Forgot password?
                                 </Link>
                             </div>
@@ -155,45 +263,90 @@ export function StudentLogin() {
                                     <span className="w-full border-t border-gray-100" />
                                 </div>
                                 <div className="relative flex justify-center text-[10px] uppercase">
-                                    <span className="bg-[#FAF5FF] px-4 text-text-muted font-black tracking-widest">Secure Access</span>
+                                    <span className="bg-[#FAF5FF] px-4 text-text-muted font-black tracking-widest">New Student?</span>
                                 </div>
                             </div>
 
-                            <div className="mt-6">
+                            <div className="mt-6 flex flex-col gap-4">
                                 <button
                                     type="button"
-                                    onClick={async () => {
-                                        try {
-                                            await authService.signInWithGoogleStudent();
-                                        } catch (err) {
-                                            console.error('Google sign-in error:', err);
-                                            setError('Failed to sign in with Google. Please try again.');
-                                        }
-                                    }}
-                                    className="w-full h-14 flex items-center justify-center gap-3 px-4 py-3 border-2 border-white/80 bg-white/40 hover:bg-white/70 rounded-2xl transition-all duration-300 group shadow-sm"
+                                    onClick={() => setIsRequestModalOpen(true)}
+                                    className="w-full h-14 flex items-center justify-center gap-3 px-4 py-3 border-2 border-primary/20 bg-primary/5 hover:bg-primary/10 rounded-2xl transition-all duration-300 group shadow-sm"
                                 >
-                                    <Chrome className="w-6 h-6 text-primary group-hover:scale-110 transition-transform" />
-                                    <span className="text-text-primary font-bold">Sign in with Google</span>
+                                    <KeyRound className="w-6 h-6 text-primary group-hover:scale-110 transition-transform" />
+                                    <span className="text-primary font-bold text-lg">Request Access</span>
                                 </button>
                             </div>
                         </div>
 
-                        <div className="mt-10 pt-6 border-t border-white/20 text-center">
-                            <p className="text-sm text-text-secondary font-medium">
-                                New to PlaceIQ?{' '}
-                                <Link to="/register-student" className="text-primary font-bold hover:text-primary-hover underline underline-offset-4 transition-colors">
-                                    Create account
-                                </Link>
-                            </p>
-                        </div>
-
                         <div className="mt-8 flex items-center justify-center gap-2 text-[10px] text-text-muted font-bold uppercase tracking-tighter opacity-60">
                             <Fingerprint className="w-3 h-3 text-primary" />
-                            Biometric & Multi-factor ready
+                            Mentor-approved Access Only
                         </div>
                     </div>
                 </div>
             </div>
+
+            {/* Request Access Modal */}
+            {isRequestModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/40 backdrop-blur-sm animate-in fade-in">
+                    <div className="bg-white rounded-[2rem] w-full max-w-xl shadow-2xl overflow-y-auto max-h-[90vh]">
+                        <div className="p-6 sm:p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                            <h3 className="text-xl sm:text-2xl font-black text-text-primary flex items-center gap-3">
+                                <KeyRound className="w-7 h-7 text-primary" />
+                                Request Access
+                            </h3>
+                            <button onClick={() => setIsRequestModalOpen(false)} className="text-gray-400 hover:text-red-500 transition-colors p-2 hover:bg-red-50 rounded-full">
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+
+                        <div className="p-6 sm:p-8">
+                            <p className="text-text-secondary mb-6 sm:mb-8 text-sm sm:text-base leading-relaxed">
+                                Enter your Register Number to receive a temporary password via email.<br />
+                                <strong className="text-text-primary mt-1 inline-block">Your Mentor must have added you to the system first.</strong>
+                            </p>
+
+                            <form onSubmit={handleRequestAccess} className="space-y-6">
+                                {requestError && (
+                                    <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl flex items-start gap-3">
+                                        <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                                        <p className="text-sm font-medium">{requestError}</p>
+                                    </div>
+                                )}
+
+                                {requestSuccess && (
+                                    <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl flex items-start gap-3">
+                                        <KeyRound className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                                        <p className="text-sm font-medium">{requestSuccess}</p>
+                                    </div>
+                                )}
+
+                                <Input
+                                    label="Register Number"
+                                    placeholder="Enter Register Number"
+                                    value={requestRegNum}
+                                    onChange={(e) => setRequestRegNum(e.target.value)}
+                                    icon={<Fingerprint className="text-primary/60 w-5 h-5" />}
+                                    required
+                                    className="bg-gray-50 border-gray-200 focus:bg-white rounded-2xl h-14"
+                                />
+
+                                <Button
+                                    type="submit"
+                                    className="w-full h-14 bg-gradient-to-r from-primary to-accent-violet hover:from-primary-hover hover:to-accent-violet text-white font-bold rounded-2xl shadow-xl shadow-primary/25 transform hover:-translate-y-1 transition-all duration-300 mt-4"
+                                    isLoading={requestLoading}
+                                >
+                                    <span className="flex items-center justify-center gap-2 text-lg">
+                                        Send Credentials
+                                        <ArrowRight className="w-5 h-5" />
+                                    </span>
+                                </Button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

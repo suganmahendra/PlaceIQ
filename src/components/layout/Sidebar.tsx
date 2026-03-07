@@ -16,6 +16,7 @@ import {
     BrainCircuit,
     Bell,
     Settings,
+    Users,
 } from 'lucide-react';
 
 const studentLinks = [
@@ -32,6 +33,7 @@ const studentLinks = [
 const mentorLinks = [
     { name: 'Dashboard', path: '/mentor/dashboard', icon: LayoutDashboard },
     { name: 'CMS & Roadmaps', path: '/mentor/cms', icon: Settings },
+    { name: 'Manage Students', path: '/mentor/cms/students', icon: Users },
 ];
 
 interface SidebarProps {

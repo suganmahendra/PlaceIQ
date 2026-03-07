@@ -57,7 +57,7 @@ export function MentorLogin() {
             <div className="absolute bottom-1/4 left-1/4 w-64 h-64 bg-accent-violet/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1.5s' }} />
 
             <div className="w-full max-w-[550px] relative z-10">
-                <div className="glass-card rounded-[32px] shadow-2xl p-6 border border-white/50 backdrop-blur-2xl">
+                <div className="glass-card rounded-[32px] shadow-2xl p-6 sm:p-8 border border-white/50 backdrop-blur-2xl">
 
                     <div className="text-center mb-8">
                         <Link to="/" className="inline-flex items-center gap-3 mb-6 group">
