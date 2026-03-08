@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Award, Zap, BookOpen, Target, ChevronRight, PlayCircle, Clock, CheckCircle2, TrendingUp, type LucideIcon } from 'lucide-react';
+import { Award, Zap, BookOpen, Target, ChevronRight, PlayCircle, Clock, CheckCircle2, TrendingUp, Briefcase, type LucideIcon } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { AnnouncementsList } from '../../components/dashboard/AnnouncementsList';
 import { useAuth } from '../../contexts/AuthContext';
 import { roadmapService } from '../../services/RoadmapService';
+import { placementsService } from '../../services/PlacementsService';
+import type { PlacementRole } from '../../services/PlacementsService';
 import type { Database } from '../../types/database.types';
-import placementData from '../../data/placementMatches.json';
 
 type StudentProfile = Database['public']['Tables']['students']['Row'];
 
@@ -15,21 +16,28 @@ export function DashboardHome() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [activeEnrollments, setActiveEnrollments] = useState<any[]>([]);
     const [isLoadingCourses, setIsLoadingCourses] = useState(true);
+    const [topRoles, setTopRoles] = useState<PlacementRole[]>([]);
 
     useEffect(() => {
-        const fetchEnrollments = async () => {
-            if (profile?.id) {
-                try {
-                    const data = await roadmapService.getActiveEnrollmentsWithDetails(profile.id);
-                    setActiveEnrollments(data || []);
-                } catch (error) {
-                    console.error("Failed to fetch active enrollments", error);
-                } finally {
-                    setIsLoadingCourses(false);
-                }
+        const fetchDashboardData = async () => {
+            if (!profile?.id) return;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const studentProfile = profile as any;
+            try {
+                const [enrollments, roles] = await Promise.all([
+                    roadmapService.getActiveEnrollmentsWithDetails(profile.id),
+                    placementsService.fetchAll(profile.id, studentProfile?.readiness_score ?? 0),
+                ]);
+                setActiveEnrollments(enrollments || []);
+                // Show top 3 roles sorted by match percentage
+                setTopRoles(roles.slice(0, 3));
+            } catch (error) {
+                console.error('Failed to fetch dashboard data', error);
+            } finally {
+                setIsLoadingCourses(false);
             }
         };
-        if (!loading) fetchEnrollments();
+        if (!loading) fetchDashboardData();
     }, [profile, loading]);
 
     if (loading) {
@@ -93,11 +101,11 @@ export function DashboardHome() {
                     <div className="mt-8 flex items-center gap-6 text-sm font-medium text-white/80">
                         <div className="flex items-center gap-2">
                             <CheckCircle2 className="w-4 h-4 text-green-300" />
-                            <span>2 Pending Assignments</span>
+                            <span>{activeEnrollments.length} Active Course{activeEnrollments.length !== 1 ? 's' : ''}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Clock className="w-4 h-4 text-yellow-300" />
-                            <span>30m Study Time Today</span>
+                            <Briefcase className="w-4 h-4 text-yellow-300" />
+                            <span>{topRoles.filter(r => r.eligibilityStatus === 'Eligible').length} Role{topRoles.filter(r => r.eligibilityStatus === 'Eligible').length !== 1 ? 's' : ''} Eligible</span>
                         </div>
                     </div>
                 </div>
@@ -191,33 +199,31 @@ export function DashboardHome() {
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="font-bold text-gray-900 text-lg">Placement Matches Preview</h3>
                             <span className="text-xs font-medium px-2 py-1 bg-green-100 text-green-700 rounded-full">
-                                {placementData.companies.length} Mapped
+                                {topRoles.filter(r => r.eligibilityStatus === 'Eligible').length} Eligible
                             </span>
                         </div>
-                        <div className="space-y-4">
-                            {placementData.companies.slice(0, 3).map((company) => {
-                                // Calculate how many required roadmaps the user has completed
-                                const completedRequired = company.requiredRoadmaps.filter(requiredSlug =>
-                                    activeEnrollments.some(enrollment =>
-                                        enrollment.courses?.slug === requiredSlug && enrollment.status === 'completed'
-                                    )
-                                ).length;
-
-                                const matchPercent = Math.round((completedRequired / company.requiredRoadmaps.length) * 100) || 0;
-
-                                return (
+                        <div className="space-y-3">
+                            {isLoadingCourses ? (
+                                <div className="text-center py-4 text-gray-400 text-sm">Loading...</div>
+                            ) : topRoles.length > 0 ? (
+                                topRoles.map((role) => (
                                     <JobRow
-                                        key={company.id}
-                                        company={company.name}
-                                        role={company.role}
-                                        match={matchPercent}
-                                        logo={company.logo}
-                                        color={company.color}
+                                        key={role.id}
+                                        company={role.companyName}
+                                        role={role.title}
+                                        match={role.matchPercentage}
+                                        status={role.eligibilityStatus}
                                     />
-                                );
-                            })}
+                                ))
+                            ) : (
+                                <div className="text-center py-6 text-gray-400 text-sm">
+                                    No active listings — check back soon
+                                </div>
+                            )}
                         </div>
-                        <Button variant="outline" className="w-full mt-6 border-gray-200 hover:bg-gray-50">View All Matches</Button>
+                        <Link to="/student/placements">
+                            <Button variant="outline" className="w-full mt-6 border-gray-200 hover:bg-gray-50">View All Matches</Button>
+                        </Link>
                     </div>
                 </div>
 
@@ -247,9 +253,20 @@ export function DashboardHome() {
                             </div>
                         </div>
                         <div className="space-y-4">
-                            <SkillBar label="DSA" percent={75} color="bg-blue-500" />
-                            <SkillBar label="Aptitude" percent={40} color="bg-yellow-500" />
-                            <SkillBar label="Communication" percent={60} color="bg-green-500" />
+                            {activeEnrollments.slice(0, 3).map((enr, i) => {
+                                const colors = ['bg-blue-500', 'bg-purple-500', 'bg-green-500'];
+                                return (
+                                    <SkillBar
+                                        key={enr.id}
+                                        label={enr.courses?.category || enr.courses?.title || 'Course'}
+                                        percent={enr.progress_percent || 0}
+                                        color={colors[i % colors.length]}
+                                    />
+                                );
+                            })}
+                            {activeEnrollments.length === 0 && (
+                                <p className="text-xs text-gray-400 text-center py-2">Enroll in courses to see skill progress</p>
+                            )}
                         </div>
                     </div>
 
@@ -337,27 +354,33 @@ interface JobRowProps {
     company: string;
     role: string;
     match: number;
-    logo: string;
-    color: string;
+    status: string;
 }
 
-const JobRow = ({ company, role, match, logo, color }: JobRowProps) => (
-    <div className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer group border border-transparent hover:border-gray-100">
-        <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center font-bold text-lg shadow-sm`}>
-            {logo}
+const statusDot: Record<string, string> = {
+    'Eligible': 'bg-green-500',
+    'Almost Ready': 'bg-amber-400',
+    'Not Ready': 'bg-red-400',
+};
+
+const JobRow = ({ company, role, match, status }: JobRowProps) => (
+    <Link to="/student/placements" className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer group border border-transparent hover:border-gray-100">
+        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+            <Briefcase className="w-5 h-5 text-primary" />
         </div>
-        <div className="flex-1">
-            <h4 className="font-bold text-gray-900 text-sm group-hover:text-primary transition-colors">{company}</h4>
-            <p className="text-gray-500 text-xs">{role}</p>
+        <div className="flex-1 min-w-0">
+            <h4 className="font-bold text-gray-900 text-sm group-hover:text-primary transition-colors truncate">{company}</h4>
+            <p className="text-gray-500 text-xs truncate">{role}</p>
         </div>
-        <div className="text-right">
-            <div className="flex items-center justify-end gap-1 text-green-600 font-bold text-sm">
-                <span>{match}%</span>
+        <div className="text-right shrink-0">
+            <div className="flex items-center justify-end gap-1.5">
+                <div className={`w-2 h-2 rounded-full ${statusDot[status] ?? 'bg-gray-300'}`} />
+                <span className="text-green-600 font-bold text-sm">{match}%</span>
             </div>
-            <p className="text-[10px] text-gray-400">Match</p>
+            <p className="text-[10px] text-gray-400">{status}</p>
         </div>
         <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-primary transition-colors" />
-    </div>
+    </Link>
 );
 
 interface SkillBarProps {
