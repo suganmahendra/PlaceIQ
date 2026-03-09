@@ -1,56 +1,48 @@
 import { useEffect, useState } from "react";
-import { BlockNoteEditor, type PartialBlock } from "@blocknote/core";
-import { useCreateBlockNote } from "@blocknote/react";
-import { BlockNoteView } from "@blocknote/mantine";
-import "@blocknote/core/fonts/inter.css";
-import "@blocknote/mantine/style.css";
 
 interface ViewerProps {
     initialContent?: string;
 }
 
 export function AppViewer({ initialContent }: ViewerProps) {
-    const [initialBlocks, setInitialBlocks] = useState<PartialBlock[] | undefined | "loading">("loading");
+    const [html, setHtml] = useState<string | "loading">("loading");
 
     useEffect(() => {
-        const loadData = async () => {
+        const loadParsedContent = async () => {
             if (!initialContent || initialContent.trim() === '') {
-                setInitialBlocks(undefined);
+                setHtml('');
                 return;
             }
 
+            // Check if it's a legacy BlockNote JSON format
             try {
                 const blocks = JSON.parse(initialContent);
                 if (Array.isArray(blocks)) {
-                    setInitialBlocks(blocks);
+                    // Convert old BlockNote blocks to HTML
+                    const { BlockNoteEditor } = await import('@blocknote/core');
+                    const temp = BlockNoteEditor.create();
+                    const convertedHtml = await temp.blocksToHTMLLossy(blocks);
+                    setHtml(convertedHtml);
                     return;
                 }
-            } catch (e) {
-                // Not JSON. Fallback to markdown parsing
-            }
+            } catch (_) { /* not json, fallback */ }
 
-            // Try to parse as markdown for backward compatibility
-            try {
-                // Fix for raw escaped strings sent from the database
-                const unescapedContent = initialContent.replace(/\\n/g, '\n');
-
-                const editor = BlockNoteEditor.create();
-                const blocks = await editor.tryParseMarkdownToBlocks(unescapedContent);
-                setInitialBlocks(blocks);
-            } catch (e) {
-                setInitialBlocks(undefined);
-            }
+            // Otherwise, it's just raw HTML from TinyMCE
+            setHtml(initialContent);
         };
 
-        loadData();
+        loadParsedContent();
     }, [initialContent]);
 
-    if (initialBlocks === "loading") {
-        return <div className="p-4 border border-gray-100 rounded-xl animate-pulse bg-gray-50 h-[200px] flex items-center justify-center text-gray-400">Loading Content...</div>;
+    if (html === "loading") {
+        return (
+            <div className="p-4 border border-gray-100 rounded-xl animate-pulse bg-gray-50 h-[200px] flex items-center justify-center text-gray-400">
+                Loading Content...
+            </div>
+        );
     }
 
-    // If there's no content to display, simply return a placeholder
-    if (!initialBlocks || initialBlocks.length === 0) {
+    if (!html) {
         return (
             <div className="text-gray-500 italic py-4">
                 Detailed text content is not available for this lesson yet.
@@ -58,21 +50,10 @@ export function AppViewer({ initialContent }: ViewerProps) {
         );
     }
 
-    return <ViewerInstance initialBlocks={initialBlocks} />;
-}
-
-function ViewerInstance({ initialBlocks }: { initialBlocks: PartialBlock[] | undefined }) {
-    const editor = useCreateBlockNote({
-        initialContent: initialBlocks,
-    });
-
     return (
-        <div className="text-gray-800 prose prose-primary max-w-none text-lg">
-            <BlockNoteView
-                editor={editor}
-                editable={false}
-                theme="light"
-            />
-        </div>
+        <div
+            className="text-gray-800 prose prose-primary max-w-none text-lg tinymce-content"
+            dangerouslySetInnerHTML={{ __html: html }}
+        />
     );
 }

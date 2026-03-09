@@ -1,11 +1,52 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Video, Code, FileText, Trash2, Edit2, Minimize2, Save, X } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Edit2, Save } from 'lucide-react';
 import { cmsService, type CourseLesson } from '../../../services/cmsService';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { AppEditor } from '../../../components/ui/AppEditor';
 import { QuizManager } from './QuizManager';
+import toast from 'react-hot-toast';
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+export interface LessonPageData {
+    id: string;
+    title: string;
+    mode: 'text' | 'html';   // 'text' = BlockNote editor, 'html' = raw HTML rendered as iframe
+    content: string;          // BlockNote JSON (used when mode='text')
+    htmlContent: string;      // Full HTML string (used when mode='html')
+}
+
+// ─── Page data parser ─────────────────────────────────────────────────────────
+
+const parseContentPages = (raw: string | undefined | null): LessonPageData[] => {
+    const blank = (): LessonPageData => ({ id: crypto.randomUUID(), title: 'Page 1', mode: 'text', content: '', htmlContent: '' });
+    if (!raw) return [blank()];
+    try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+            const first = parsed[0];
+            if (typeof first === 'object' && 'title' in first) {
+                // Migrate old pages that don't have mode/htmlContent
+                return parsed.map((p: any, i: number) => ({
+                    id: p.id ?? crypto.randomUUID(),
+                    title: p.title ?? `Page ${i + 1}`,
+                    mode: p.mode ?? 'text',
+                    content: p.content ?? '',
+                    htmlContent: p.htmlContent ?? '',
+                }));
+            }
+            // Old BlockNote array format (pre-paged)
+            return [{ id: crypto.randomUUID(), title: 'Page 1', mode: 'text', content: raw, htmlContent: '' }];
+        }
+    } catch (_) { /* raw markdown */ }
+    return [{ id: crypto.randomUUID(), title: 'Page 1', mode: 'text', content: raw ?? '', htmlContent: '' }];
+};
+
+
+
+// ─── PhaseManager ─────────────────────────────────────────────────────────────
 
 export function PhaseManager() {
     const { moduleId } = useParams<{ moduleId: string }>();
@@ -14,20 +55,13 @@ export function PhaseManager() {
     const [module, setModule] = useState<any>(null);
     const [lessons, setLessons] = useState<CourseLesson[]>([]);
     const [loading, setLoading] = useState(true);
-
-    // Editing State
     const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
     const [lessonForm, setLessonForm] = useState<Partial<CourseLesson>>({
-        title: '',
-        content_markdown: '',
-        video_url: '',
-        code_snippets: null
+        title: '', content_markdown: '', video_url: '', code_snippets: null
     });
 
     useEffect(() => {
-        if (moduleId) {
-            loadModuleData(moduleId);
-        }
+        if (moduleId) loadModuleData(moduleId);
     }, [moduleId]);
 
     const loadModuleData = async (id: string) => {
@@ -45,12 +79,8 @@ export function PhaseManager() {
         }
     };
 
-    const handleSaveLesson = async (overrideSnippets?: any) => {
+    const handleSaveLesson = async (snippets?: any) => {
         if (!moduleId || !lessonForm.title) return;
-
-        // Use the override if provided, else current state
-        const snippetData = overrideSnippets !== undefined ? overrideSnippets : lessonForm.code_snippets;
-
         try {
             if (editingLessonId === 'new') {
                 const newLesson = await cmsService.createLesson({
@@ -59,7 +89,7 @@ export function PhaseManager() {
                     content_markdown: lessonForm.content_markdown || '',
                     video_url: lessonForm.video_url,
                     order_index: lessons.length,
-                    code_snippets: snippetData
+                    code_snippets: snippets ?? lessonForm.code_snippets
                 } as any);
                 setLessons([...lessons, newLesson]);
             } else if (editingLessonId) {
@@ -67,15 +97,16 @@ export function PhaseManager() {
                     title: lessonForm.title!,
                     content_markdown: lessonForm.content_markdown,
                     video_url: lessonForm.video_url,
-                    code_snippets: snippetData
+                    code_snippets: snippets ?? lessonForm.code_snippets
                 } as any);
                 setLessons(lessons.map(l => l.id === editingLessonId ? updated : l));
             }
+            toast.success('Topic saved!');
             setEditingLessonId(null);
             setLessonForm({ title: '', content_markdown: '', video_url: '', code_snippets: null });
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to save topic:', error);
-            alert('Failed to save topic');
+            toast.error(error?.message || 'Failed to save topic');
         }
     };
 
@@ -94,34 +125,36 @@ export function PhaseManager() {
         try {
             await cmsService.deleteLesson(id);
             setLessons(lessons.filter(l => l.id !== id));
+            toast.success('Topic deleted.');
         } catch (error) {
             console.error('Failed to delete topic:', error);
         }
     };
 
-    if (loading) return <div className="p-8 text-center bg-transparent">Loading Phase Content...</div>;
+    if (loading) return <div className="p-8 text-center">Loading Phase Content...</div>;
 
     return (
         <div className="max-w-4xl mx-auto space-y-6 pb-20 px-2 sm:px-0">
-            {/* Page header */}
+            {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
                 <button
                     onClick={() => navigate(-1)}
                     className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors w-fit"
                 >
-                    <ArrowLeft className="w-4 h-4" />
-                    Back to Phase List
+                    <ArrowLeft className="w-4 h-4" /> Back to Phase List
                 </button>
                 <span className="text-xs text-gray-400 uppercase tracking-wider font-bold">Phase Content Manager</span>
             </div>
 
-            {/* Hero card */}
+            {/* Hero */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 gap-3">
                 <div className="min-w-0">
                     <h1 className="text-xl sm:text-2xl font-bold text-gray-900 break-words">
                         Manage Topics {module ? `for: ${module.title}` : ''}
                     </h1>
-                    <p className="text-gray-500 text-sm mt-0.5">Add videos, notes, and code snippets for this phase.</p>
+                    <p className="text-gray-500 text-sm mt-0.5">
+                        Each topic supports multiple pages. Use <strong>Text</strong> or <strong>HTML</strong> mode per page.
+                    </p>
                 </div>
                 <Button
                     onClick={() => {
@@ -134,10 +167,10 @@ export function PhaseManager() {
                 </Button>
             </div>
 
-            {/* List of Lessons */}
+            {/* Lesson list */}
             <div className="space-y-4">
                 {editingLessonId === 'new' && (
-                    <div className="bg-white border-2 border-primary/20 p-4 sm:p-6 rounded-xl shadow-lg ring-2 ring-primary/10 animate-in fade-in zoom-in-95">
+                    <div className="bg-white border-2 border-primary/20 p-4 sm:p-6 rounded-xl shadow-lg">
                         <h3 className="font-bold text-lg mb-4 text-primary">New Topic</h3>
                         <TopicForm
                             form={lessonForm}
@@ -149,10 +182,12 @@ export function PhaseManager() {
                 )}
 
                 {lessons.map((lesson, index) => (
-                    <div key={lesson.id} className="relative">
+                    <div key={lesson.id}>
                         {editingLessonId === lesson.id ? (
-                            <div className="bg-white border-2 border-primary/20 p-4 sm:p-6 rounded-xl shadow-lg z-10 relative">
-                                <h3 className="font-bold text-base sm:text-lg mb-4 text-primary break-words">Editing: {lesson.title}</h3>
+                            <div className="bg-white border-2 border-primary/20 p-4 sm:p-6 rounded-xl shadow-lg">
+                                <h3 className="font-bold text-base sm:text-lg mb-4 text-primary break-words">
+                                    Editing: {lesson.title}
+                                </h3>
                                 <TopicForm
                                     form={lessonForm}
                                     setForm={setLessonForm}
@@ -166,44 +201,33 @@ export function PhaseManager() {
                         ) : (
                             <div className="bg-white p-3 sm:p-4 rounded-xl border border-gray-200 hover:border-primary/30 transition-colors flex items-center justify-between gap-2">
                                 <div className="flex items-center gap-3 min-w-0">
-                                    <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-50 text-gray-600 flex items-center justify-center font-bold text-xs ring-1 ring-gray-100 shrink-0">
+                                    <span className="w-7 h-7 rounded-full bg-gray-50 text-gray-600 flex items-center justify-center font-bold text-xs ring-1 ring-gray-100 shrink-0">
                                         {index + 1}
                                     </span>
                                     <div className="min-w-0">
                                         <h4 className="font-bold text-sm sm:text-base text-gray-900 truncate">{lesson.title}</h4>
                                         <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                            {lesson.video_url && (
-                                                <span className="text-xs flex items-center gap-1 text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-                                                    <Video className="w-3 h-3" /> Video
-                                                </span>
-                                            )}
-                                            {lesson.content_markdown && (
-                                                <span className="text-xs flex items-center gap-1 text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-                                                    <FileText className="w-3 h-3" /> Content
-                                                </span>
-                                            )}
-                                            {lesson.code_snippets && (
-                                                <span className="text-xs flex items-center gap-1 text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">
-                                                    <Code className="w-3 h-3" /> Code
-                                                </span>
-                                            )}
+                                            {lesson.content_markdown && (() => {
+                                                try {
+                                                    const pages = JSON.parse(lesson.content_markdown || '[]') as LessonPageData[];
+                                                    const hasHtml = Array.isArray(pages) && pages.some(p => p.mode === 'html');
+                                                    const hasText = Array.isArray(pages) && pages.some(p => p.mode !== 'html');
+                                                    return (
+                                                        <>
+                                                            {hasText && <span className="text-xs flex items-center gap-1 text-green-600 bg-green-50 px-2 py-0.5 rounded-full"><FileText className="w-3 h-3" /> Text</span>}
+                                                            {hasHtml && <span className="text-xs flex items-center gap-1 text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full"><Code className="w-3 h-3" /> HTML</span>}
+                                                        </>
+                                                    );
+                                                } catch { return null; }
+                                            })()}
                                         </div>
                                     </div>
                                 </div>
-                                {/* Always visible on mobile; fade on desktop for a cleaner look */}
                                 <div className="flex items-center gap-1 shrink-0">
-                                    <button
-                                        onClick={() => startEdit(lesson)}
-                                        className="p-1.5 rounded-lg text-gray-400 hover:text-primary hover:bg-primary/5 transition-colors"
-                                        title="Edit"
-                                    >
+                                    <button onClick={() => startEdit(lesson)} className="p-1.5 rounded-lg text-gray-400 hover:text-primary hover:bg-primary/5 transition-colors">
                                         <Edit2 className="w-4 h-4" />
                                     </button>
-                                    <button
-                                        onClick={() => handleDelete(lesson.id)}
-                                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-                                        title="Delete"
-                                    >
+                                    <button onClick={() => handleDelete(lesson.id)} className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
                                         <Trash2 className="w-4 h-4" />
                                     </button>
                                 </div>
@@ -222,244 +246,88 @@ export function PhaseManager() {
     );
 }
 
-export interface LessonPageData {
-    id: string;
-    title: string;
-    content: string;
-}
-
-const parseContentPages = (raw: string | undefined | null): LessonPageData[] => {
-    if (!raw) return [{ id: crypto.randomUUID(), title: 'Page 1', content: '' }];
-    try {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) {
-            if (parsed.length > 0 && typeof parsed[0] === 'object' && 'title' in parsed[0] && 'content' in parsed[0]) {
-                return parsed;
-            }
-            // Old BlockNote array format
-            return [{ id: crypto.randomUUID(), title: 'Page 1', content: raw }];
-        }
-    } catch (e) {
-        // Raw markdown
-    }
-    return [{ id: crypto.randomUUID(), title: 'Page 1', content: raw }];
-};
+// ─── TopicForm ────────────────────────────────────────────────────────────────
 
 function TopicForm({ form, setForm, onSave, onCancel }: {
-    form: Partial<CourseLesson>,
-    setForm: (f: Partial<CourseLesson>) => void,
-    onSave: (snippets?: any) => void,
-    onCancel: () => void
+    form: Partial<CourseLesson>;
+    setForm: (f: Partial<CourseLesson>) => void;
+    onSave: (snippets?: any) => void;
+    onCancel: () => void;
 }) {
     const [pages, setPages] = useState<LessonPageData[]>(() => parseContentPages(form.content_markdown));
     const [activePageIdx, setActivePageIdx] = useState(0);
-    const [isFullscreen, setIsFullscreen] = useState(false);
-    // Snapshot of pages before entering fullscreen — used for Discard
-    const pagesSnapshot = useRef<string>('');
+
+    const activePage = pages[activePageIdx] ?? pages[0];
+
+    const syncPages = useCallback((newPages: LessonPageData[]) => {
+        setPages(newPages);
+        setForm({ ...form, content_markdown: JSON.stringify(newPages) });
+    }, [form, setForm]);
+
+    const updateActivePage = (patch: Partial<LessonPageData>) => {
+        const updated = pages.map((p, i) => i === activePageIdx ? { ...p, ...patch } : p);
+        syncPages(updated);
+    };
 
     const handleSaveClick = () => {
         setForm({ ...form, content_markdown: JSON.stringify(pages) });
         setTimeout(() => onSave(form.code_snippets), 0);
     };
 
-    const syncForm = (newPages: LessonPageData[]) => {
-        setPages(newPages);
-        setForm({ ...form, content_markdown: JSON.stringify(newPages) });
-    };
-
     const handleAddPage = () => {
-        const newPages = [...pages, { id: crypto.randomUUID(), title: `Page ${pages.length + 1}`, content: '' }];
-        syncForm(newPages);
+        const newPages = [
+            ...pages,
+            // Keep mode: 'text' default for backward compatibility with existing data model
+            { id: crypto.randomUUID(), title: `Page ${pages.length + 1}`, mode: 'text' as const, content: '', htmlContent: '' }
+        ];
+        syncPages(newPages);
         setActivePageIdx(newPages.length - 1);
     };
 
-    const handleDeletePage = (idxToRemove: number) => {
+    const handleDeletePage = (idx: number) => {
         if (pages.length <= 1) return;
-        const newPages = pages.filter((_, i) => i !== idxToRemove);
-        syncForm(newPages);
+        const newPages = pages.filter((_, i) => i !== idx);
+        syncPages(newPages);
         setActivePageIdx(Math.min(activePageIdx, newPages.length - 1));
     };
 
-    const handlePageContentChange = (newContent: string) => {
-        const newPages = [...pages];
-        newPages[activePageIdx].content = newContent;
-        syncForm(newPages);
+    const switchPage = (idx: number) => {
+        setActivePageIdx(idx);
     };
 
-    // ── Fullscreen helpers ─────────────────────────────────────────
-    const openFullscreen = () => {
-        pagesSnapshot.current = JSON.stringify(pages);
-        setIsFullscreen(true);
-    };
-
-    const saveAndCloseFullscreen = () => {
-        setIsFullscreen(false);
-        handleSaveClick();
-    };
-
-    const discardAndCloseFullscreen = () => {
-        // Restore pages to the state they were in when fullscreen was opened
-        const restored = JSON.parse(pagesSnapshot.current) as LessonPageData[];
-        syncForm(restored);
-        setActivePageIdx(prev => Math.min(prev, restored.length - 1));
-        setIsFullscreen(false);
-    };
-
-    // Hide sidebar + chatbot when fullscreen is active
-    useEffect(() => {
-        const styleId = 'cms-fullscreen-style';
-        if (isFullscreen) {
-            document.body.style.overflow = 'hidden';
-            // Inject a style tag to hide the sidebar (z-50) and AIChatbot
-            if (!document.getElementById(styleId)) {
-                const style = document.createElement('style');
-                style.id = styleId;
-                style.textContent = `
-                    body.cms-fullscreen aside { display: none !important; }
-                    body.cms-fullscreen [data-topbar] { display: none !important; }
-                    body.cms-fullscreen [data-chatbot] { display: none !important; }
-                `;
-                document.head.appendChild(style);
-            }
-            document.body.classList.add('cms-fullscreen');
-        } else {
-            document.body.style.overflow = '';
-            document.body.classList.remove('cms-fullscreen');
-        }
-        return () => {
-            document.body.style.overflow = '';
-            document.body.classList.remove('cms-fullscreen');
-        };
-    }, [isFullscreen]);
-
-    // Escape key exits fullscreen without saving
-    useEffect(() => {
-        const handler = (e: KeyboardEvent) => {
-            if (e.key === 'Escape' && isFullscreen) discardAndCloseFullscreen();
-        };
-        window.addEventListener('keydown', handler);
-        return () => window.removeEventListener('keydown', handler);
-    }, [isFullscreen, pages]);
-
-    // ── Page Tabs (shared between inline + fullscreen) ──────────────
+    // ── Page Tabs (shared) ──────────────────────────────────────────
     const PageTabs = ({ compact = false }: { compact?: boolean }) => (
         <div className={`flex gap-2 overflow-x-auto ${compact ? '' : 'flex-1 mr-4 pb-1'}`}>
             {pages.map((p, idx) => (
                 <div key={p.id} className="flex-shrink-0 flex items-center">
                     <button
-                        onClick={() => setActivePageIdx(idx)}
+                        onClick={() => switchPage(idx)}
                         className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${activePageIdx === idx
-                            ? compact
-                                ? 'bg-white/20 text-white border border-white/30'
-                                : 'bg-white text-primary border border-gray-200 shadow-sm'
-                            : compact
-                                ? 'text-white/60 hover:text-white hover:bg-white/10'
-                                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+                            ? compact ? 'bg-white/20 text-white border border-white/30' : 'bg-white text-primary border border-gray-200 shadow-sm'
+                            : compact ? 'text-white/60 hover:text-white hover:bg-white/10' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
                             }`}
                     >
                         {p.title || `Page ${idx + 1}`}
                     </button>
                     {pages.length > 1 && activePageIdx === idx && (
-                        <button
-                            onClick={() => handleDeletePage(idx)}
-                            className={`ml-1 p-1 transition-colors ${compact ? 'text-white/50 hover:text-red-300' : 'text-gray-400 hover:text-red-500'
-                                }`}
-                            title="Delete Page"
-                        >
+                        <button onClick={() => handleDeletePage(idx)} className={`ml-1 p-1 transition-colors ${compact ? 'text-white/50 hover:text-red-300' : 'text-gray-400 hover:text-red-500'}`} title="Remove page">
                             <Trash2 className="w-3.5 h-3.5" />
                         </button>
                     )}
                 </div>
             ))}
-            <button
-                onClick={handleAddPage}
-                className={`flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${compact
-                    ? 'text-white/60 hover:text-white hover:bg-white/10'
-                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
-                    }`}
-            >
-                <Plus className="w-3.5 h-3.5" />
-                Add Page
+            <button onClick={handleAddPage} className={`flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${compact ? 'text-white/60 hover:text-white hover:bg-white/10' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'}`}>
+                <Plus className="w-3.5 h-3.5" /> Add Page
             </button>
         </div>
     );
 
-    // ── Fullscreen Overlay ──────────────────────────────────────────
-    if (isFullscreen) {
-        return (
-            <div className="fixed inset-0 z-[9999] bg-white flex flex-col">
-                {/* Top toolbar */}
-                <div className="flex items-center justify-between px-3 sm:px-5 py-2 sm:py-3 bg-gray-900 text-white shrink-0 gap-2">
-                    {/* Left: close without saving */}
-                    <button
-                        onClick={discardAndCloseFullscreen}
-                        className="flex items-center gap-1.5 text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 px-2 sm:px-3 py-1.5 rounded-lg transition-colors shrink-0"
-                        title="Discard changes and close (Esc)"
-                    >
-                        <X className="w-4 h-4" />
-                        <span className="hidden sm:inline">Discard &amp; Close</span>
-                    </button>
 
-                    {/* Centre: page tabs */}
-                    <div className="flex-1 flex items-center justify-center overflow-x-auto min-w-0">
-                        <PageTabs compact />
-                    </div>
 
-                    {/* Right: save */}
-                    <button
-                        onClick={saveAndCloseFullscreen}
-                        className="flex items-center gap-1.5 text-sm font-semibold bg-primary text-white px-3 sm:px-4 py-1.5 rounded-lg hover:bg-primary/90 transition-colors shadow shrink-0"
-                    >
-                        <Save className="w-4 h-4" />
-                        <span className="hidden sm:inline">Save Topic</span>
-                    </button>
-                </div>
-
-                {/* Hint bar - hidden on small screens */}
-                <div className="hidden sm:flex items-center justify-between px-5 py-1.5 bg-gray-50 border-b border-gray-100 shrink-0">
-                    <span className="text-xs text-gray-400">Type '/' to add headings, code blocks, and more</span>
-                    <button
-                        onClick={discardAndCloseFullscreen}
-                        className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-700 transition-colors"
-                    >
-                        <Minimize2 className="w-3 h-3" /> Exit fullscreen
-                    </button>
-                </div>
-
-                {/* Editor canvas */}
-                <div className="flex-1 overflow-y-auto">
-                    <div className="max-w-3xl mx-auto py-10 px-4">
-                        <AppEditor
-                            key={pages[activePageIdx].id}
-                            initialContent={pages[activePageIdx].content}
-                            onChange={handlePageContentChange}
-                        />
-                    </div>
-                </div>
-
-                {/* Sticky bottom save bar */}
-                <div className="shrink-0 border-t border-gray-100 bg-white px-6 py-3 flex justify-end gap-3">
-                    <button
-                        onClick={discardAndCloseFullscreen}
-                        className="text-sm font-medium text-gray-500 hover:text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors"
-                    >
-                        Discard & Close
-                    </button>
-                    <button
-                        onClick={saveAndCloseFullscreen}
-                        className="flex items-center gap-1.5 text-sm font-semibold bg-primary text-white px-5 py-2 rounded-lg shadow hover:bg-primary/90 transition-colors"
-                    >
-                        <Save className="w-4 h-4" />
-                        Save Topic
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
-    // ── Normal (inline) form ──────────────────────────────────────
+    // ── Normal form ─────────────────────────────────────────────────
     return (
         <div className="space-y-6">
+            {/* Topic Title */}
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Topic Title</label>
                 <Input
@@ -470,22 +338,34 @@ function TopicForm({ form, setForm, onSave, onCancel }: {
                 />
             </div>
 
+            {/* Page tabs + per-page editor */}
             <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
-                <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+                {/* Tab bar */}
+                <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
                     <PageTabs />
                 </div>
 
                 <div className="p-4 space-y-4">
+                    {/* Page Title */}
                     <div>
-                        <div className="flex flex-col xs:flex-row justify-between items-start xs:items-end gap-1 mb-1">
+                        <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Page Title</label>
+                        <input
+                            value={activePage.title}
+                            onChange={e => updateActivePage({ title: e.target.value })}
+                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                            placeholder="Page title..."
+                        />
+                    </div>
+
+                    {/* Editor area */}
+                    <div>
+                        <div className="flex items-end justify-between mb-2">
                             <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider">Page Content</label>
-                            <span className="text-xs text-gray-400 hidden sm:block">Type '/' to add code snippets</span>
                         </div>
                         <AppEditor
-                            key={pages[activePageIdx].id}
-                            initialContent={pages[activePageIdx].content}
-                            onChange={handlePageContentChange}
-                            onOpenFullscreen={openFullscreen}
+                            key={activePage.id}
+                            initialContent={activePage.content}
+                            onChange={c => updateActivePage({ content: c })}
                         />
                     </div>
                 </div>

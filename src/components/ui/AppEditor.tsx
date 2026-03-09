@@ -1,46 +1,67 @@
-import { useEffect, useState } from "react";
-import { BlockNoteEditor, type PartialBlock } from "@blocknote/core";
-import { useCreateBlockNote } from "@blocknote/react";
-import { BlockNoteView } from "@blocknote/mantine";
-import { Maximize2 } from "lucide-react";
-import "@blocknote/core/fonts/inter.css";
-import "@blocknote/mantine/style.css";
+import { useEffect, useState, useRef } from "react";
+import { Editor } from "@tinymce/tinymce-react";
 
 interface EditorProps {
     initialContent?: string;
-    onChange: (jsonContent: string) => void;
-    /** If provided, fullscreen button calls this instead of managing its own state */
-    onOpenFullscreen?: () => void;
+    onChange: (htmlContent: string) => void;
 }
 
-export function AppEditor({ initialContent, onChange, onOpenFullscreen }: EditorProps) {
-    const [initialBlocks, setInitialBlocks] = useState<PartialBlock[] | undefined | "loading">("loading");
+const TINYMCE_INIT = {
+    height: 500,
+    menubar: true,
+    plugins: [
+        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+        'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+        'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+    ],
+    toolbar: 'undo redo | blocks | ' +
+        'bold italic forecolor | alignleft aligncenter ' +
+        'alignright alignjustify | bullist numlist outdent indent | ' +
+        'removeformat | image media code | help',
+    content_style: 'body { font-family:Inter,Helvetica,Arial,sans-serif; font-size:15px; background: #fff; padding: 1rem; }',
+    branding: false,
+    promotion: false,
+    skin: 'oxide',
+};
+
+export function AppEditor({ initialContent, onChange }: EditorProps) {
+    const [content, setContent] = useState<string>("");
+    const [loading, setLoading] = useState(true);
+    const initialized = useRef(false);
 
     useEffect(() => {
-        const loadData = async () => {
+        if (initialized.current) return;
+
+        const loadParsedContent = async () => {
             if (!initialContent || initialContent.trim() === '') {
-                setInitialBlocks(undefined);
+                setContent('');
+                setLoading(false);
                 return;
             }
+
+            // Check if it's legacy BlockNote JSON
             try {
                 const blocks = JSON.parse(initialContent);
                 if (Array.isArray(blocks)) {
-                    setInitialBlocks(blocks);
+                    // Convert legacy blocks to lossy HTML
+                    const { BlockNoteEditor } = await import('@blocknote/core');
+                    const temp = BlockNoteEditor.create();
+                    const html = await temp.blocksToHTMLLossy(blocks);
+                    setContent(html);
+                    setLoading(false);
                     return;
                 }
-            } catch (_) { /* fallback to markdown */ }
-            try {
-                const editor = BlockNoteEditor.create();
-                const blocks = await editor.tryParseMarkdownToBlocks(initialContent);
-                setInitialBlocks(blocks);
-            } catch (_) {
-                setInitialBlocks(undefined);
-            }
+            } catch (_) { /* not json, just use as raw html */ }
+
+            // Otherwise just use raw string (assuming it's HTML from TinyMCE)
+            setContent(initialContent);
+            setLoading(false);
         };
-        loadData();
+        loadParsedContent();
+        initialized.current = true;
     }, [initialContent]);
 
-    if (initialBlocks === "loading") {
+    if (loading) {
         return (
             <div className="p-4 border border-gray-200 rounded-xl animate-pulse bg-gray-50 h-[300px] flex items-center justify-center text-gray-400">
                 Loading Editor...
@@ -48,42 +69,14 @@ export function AppEditor({ initialContent, onChange, onOpenFullscreen }: Editor
         );
     }
 
-    return <EditorInstance initialBlocks={initialBlocks} onChange={onChange} onOpenFullscreen={onOpenFullscreen} />;
-}
-
-function EditorInstance({
-    initialBlocks,
-    onChange,
-    onOpenFullscreen,
-}: {
-    initialBlocks: PartialBlock[] | undefined;
-    onChange: (json: string) => void;
-    onOpenFullscreen?: () => void;
-}) {
-    const editor = useCreateBlockNote({ initialContent: initialBlocks });
-
     return (
         <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
-            {/* Compact toolbar */}
-            {onOpenFullscreen && (
-                <div className="flex items-center justify-end px-3 py-1.5 border-b border-gray-100 bg-gray-50">
-                    <button
-                        onClick={onOpenFullscreen}
-                        className="flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-primary hover:bg-primary/5 px-2 py-1 rounded-lg transition-colors"
-                        title="Open in Fullscreen"
-                    >
-                        <Maximize2 className="w-3.5 h-3.5" />
-                        Fullscreen
-                    </button>
-                </div>
-            )}
-            <div className="py-2 min-h-[300px]">
-                <BlockNoteView
-                    editor={editor}
-                    theme="light"
-                    onChange={() => onChange(JSON.stringify(editor.document))}
-                />
-            </div>
+            <Editor
+                apiKey={import.meta.env.VITE_TINYMCE_API_KEY || "ellrykogqoljz2bou2vg7kgw0xo2pyw6mbzrj4rkbihh2q3p"}
+                initialValue={content}
+                onEditorChange={(newContent) => onChange(newContent)}
+                init={TINYMCE_INIT}
+            />
         </div>
     );
 }

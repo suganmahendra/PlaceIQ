@@ -16,24 +16,31 @@ type Lesson = Database['public']['Tables']['course_lessons']['Row'];
 export interface LessonPageData {
     id: string;
     title: string;
-    content: string;
+    mode: 'text' | 'html';
+    content: string;       // BlockNote JSON (text mode)
+    htmlContent: string;   // Full HTML string (html mode)
 }
 
 const parseContentPages = (raw: string | undefined | null): LessonPageData[] => {
-    if (!raw) return [{ id: crypto.randomUUID(), title: 'Page 1', content: '' }];
+    const blank = (): LessonPageData => ({ id: crypto.randomUUID(), title: 'Page 1', mode: 'text', content: '', htmlContent: '' });
+    if (!raw) return [blank()];
     try {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) {
-            if (parsed.length > 0 && typeof parsed[0] === 'object' && 'title' in parsed[0] && 'content' in parsed[0]) {
-                return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+            const first = parsed[0];
+            if (typeof first === 'object' && 'title' in first) {
+                return parsed.map((p: any, i: number) => ({
+                    id: p.id ?? crypto.randomUUID(),
+                    title: p.title ?? `Page ${i + 1}`,
+                    mode: p.mode ?? 'text',
+                    content: p.content ?? '',
+                    htmlContent: p.htmlContent ?? '',
+                }));
             }
-            // Old BlockNote array format
-            return [{ id: crypto.randomUUID(), title: 'Page 1', content: raw }];
+            return [{ id: crypto.randomUUID(), title: 'Page 1', mode: 'text', content: raw, htmlContent: '' }];
         }
-    } catch (e) {
-        // Raw markdown
-    }
-    return [{ id: crypto.randomUUID(), title: 'Page 1', content: raw }];
+    } catch (_) { /* raw markdown */ }
+    return [{ id: crypto.randomUUID(), title: 'Page 1', mode: 'text', content: raw ?? '', htmlContent: '' }];
 };
 
 export const slugify = (text: string) => text.toString().toLowerCase().trim()
@@ -215,8 +222,7 @@ export function LessonPage() {
             <div className="flex-1 flex flex-col items-center w-full">
                 {/* Document Viewer */}
                 <div className="w-full max-w-4xl mx-auto px-6 pt-6 md:pt-8 pb-20">
-                    <div className="min-h-[500px]">
-                        {/* Force remount of viewer per page to ensure BlockNote updates cleanly */}
+                    <div className="min-h-[200px]">
                         {activePage ? (
                             <AppViewer key={activePage.id} initialContent={activePage.content} />
                         ) : (
@@ -302,3 +308,4 @@ export function LessonPage() {
         </div>
     );
 }
+
