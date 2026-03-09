@@ -111,7 +111,7 @@ export function AnalyticsPage() {
                 )}
 
                 {/* ── KPI Cards ───────────────────────────────────────── */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                     {/* This Week */}
                     <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
                         <div className="flex items-center gap-3 mb-2">
@@ -186,7 +186,7 @@ export function AnalyticsPage() {
                 </div>
 
                 {/* ── Secondary Stats ─────────────────────────────────── */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm flex items-center gap-3">
                         <div className="bg-purple-100 p-2 rounded-lg shrink-0">
                             <Trophy className="w-4 h-4 text-purple-600" />
@@ -270,11 +270,11 @@ export function AnalyticsPage() {
                                 return (
                                     <div key={index} className="space-y-1">
                                         <div className="flex items-center justify-between">
-                                            <span className={`text-sm font-medium w-12 ${isToday ? 'text-primary font-bold' : 'text-gray-700'}`}>
+                                            <span className={`text-xs sm:text-sm font-medium w-10 sm:w-12 shrink-0 ${isToday ? 'text-primary font-bold' : 'text-gray-700'}`}>
                                                 {day.day}
                                                 {isToday && <span className="text-xs ml-1 text-primary/70">•</span>}
                                             </span>
-                                            <div className="flex-1 mx-4">
+                                            <div className="flex-1 mx-2 sm:mx-4">
                                                 <div className="flex h-8 rounded-lg overflow-hidden bg-gray-100">
                                                     {day.videoHours > 0 && (
                                                         <div
@@ -299,7 +299,7 @@ export function AnalyticsPage() {
                                                     )}
                                                 </div>
                                             </div>
-                                            <span className="text-sm font-semibold text-gray-900 w-14 text-right">
+                                            <span className="text-xs sm:text-sm font-semibold text-gray-900 w-10 sm:w-14 text-right shrink-0">
                                                 {day.total}h
                                             </span>
                                         </div>
@@ -312,16 +312,16 @@ export function AnalyticsPage() {
                     )}
 
                     {/* Legend */}
-                    <div className="flex items-center justify-center gap-6 mt-6 pt-6 border-t border-gray-100">
+                    <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 mt-6 pt-6 border-t border-gray-100">
                         <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 bg-blue-500 rounded" />
-                            <span className="text-sm text-gray-600">
+                            <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-500 rounded" />
+                            <span className="text-xs sm:text-sm text-gray-600">
                                 Video/Lessons ({data ? data.weeklyActivity.reduce((s, d) => s + d.videoHours, 0).toFixed(1) : 0}h)
                             </span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 bg-purple-500 rounded" />
-                            <span className="text-sm text-gray-600">
+                            <div className="w-3 h-3 sm:w-4 sm:h-4 bg-purple-500 rounded" />
+                            <span className="text-xs sm:text-sm text-gray-600">
                                 Quizzes ({data ? data.weeklyActivity.reduce((s, d) => s + d.quizHours, 0).toFixed(1) : 0}h)
                             </span>
                         </div>
@@ -353,8 +353,8 @@ export function AnalyticsPage() {
                             {data.skillReadiness.map((skill) => (
                                 <div key={skill.skill}>
                                     <div className="flex items-center justify-between mb-2">
-                                        <span className="font-medium text-gray-900">{skill.skill}</span>
-                                        <div className="flex items-center gap-3">
+                                        <span className="font-medium text-gray-900 text-sm sm:text-base truncate mr-2">{skill.skill}</span>
+                                        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                                             <Badge
                                                 variant={
                                                     skill.status === 'Bright'
@@ -367,7 +367,7 @@ export function AnalyticsPage() {
                                             >
                                                 {skill.status}
                                             </Badge>
-                                            <span className="text-sm font-semibold text-gray-700 w-12 text-right">
+                                            <span className="text-xs sm:text-sm font-semibold text-gray-700 w-8 sm:w-12 text-right">
                                                 {skill.level}%
                                             </span>
                                         </div>
@@ -392,17 +392,17 @@ export function AnalyticsPage() {
 
                     {/* Overall readiness */}
                     {!loading && data && (
-                        <div className="mt-6 pt-6 border-t border-gray-100 flex items-center justify-between">
-                            <span className="text-sm text-gray-600">Overall Readiness Score</span>
+                        <div className="mt-6 pt-6 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <span className="text-sm text-gray-600 font-medium">Overall Readiness Score</span>
                             <div className="flex items-center gap-3">
-                                <div className="w-32">
+                                <div className="w-full sm:w-32 flex-1">
                                     <ProgressBar
                                         progress={data.readinessScore}
                                         height="sm"
                                         color="bg-primary"
                                     />
                                 </div>
-                                <span className="font-bold text-primary">{data.readinessScore}%</span>
+                                <span className="font-bold text-primary w-10 text-right">{data.readinessScore}%</span>
                             </div>
                         </div>
                     )}

@@ -38,6 +38,7 @@ const slugify = (text: string) => {
         .replace(/-+$/, '');            // Trim - from end of text
 };
 
+
 export const cmsService = {
     // Courses (Roadmaps)
     async getCourses() {
@@ -68,24 +69,28 @@ export const cmsService = {
             .insert({
                 ...course,
                 slug,
-                // created_by should ideally be set from auth context or trigger
             } as any)
-            .select()
-            .single();
+            .select();
         if (error) throw error;
-        return data as Course;
+        if (!data || data.length === 0) {
+            throw new Error('Failed to create course — RLS policy blocked the insert. Check Supabase permissions.');
+        }
+        return data[0] as Course;
     },
 
     async updateCourse(id: string, updates: CourseUpdate) {
-        // If title changes, maybe update slug? Let's keep slug stable for now unless explicitly asked.
         const { data, error } = await supabase
             .from('courses')
             .update(updates)
             .eq('id', id)
-            .select()
-            .single();
+            .select();
+
         if (error) throw error;
-        return data as Course;
+
+        if (!data || data.length === 0) {
+            throw new Error('Save failed: RLS policy blocked the update. Please run the SQL fix in Supabase SQL Editor.');
+        }
+        return data[0] as Course;
     },
 
     async deleteCourse(id: string) {
@@ -121,10 +126,12 @@ export const cmsService = {
         const { data, error } = await supabase
             .from('course_modules')
             .insert(module)
-            .select()
-            .single();
+            .select();
         if (error) throw error;
-        return data as CourseModule;
+        if (!data || data.length === 0) {
+            throw new Error('Failed to create phase — RLS policy blocked the insert.');
+        }
+        return data[0] as CourseModule;
     },
 
     async updateModule(id: string, updates: CourseModuleUpdate) {
@@ -132,10 +139,9 @@ export const cmsService = {
             .from('course_modules')
             .update(updates)
             .eq('id', id)
-            .select()
-            .single();
+            .select();
         if (error) throw error;
-        return data as CourseModule;
+        return (data?.[0] || { id, ...updates }) as CourseModule;
     },
 
     async deleteModule(id: string) {
@@ -161,10 +167,12 @@ export const cmsService = {
         const { data, error } = await supabase
             .from('course_lessons')
             .insert(lesson as any)
-            .select()
-            .single();
+            .select();
         if (error) throw error;
-        return data as CourseLesson;
+        if (!data || data.length === 0) {
+            throw new Error('Failed to create lesson — RLS policy blocked the insert.');
+        }
+        return data[0] as CourseLesson;
     },
 
     async updateLesson(id: string, updates: CourseLessonUpdate) {
@@ -172,10 +180,9 @@ export const cmsService = {
             .from('course_lessons')
             .update(updates as any)
             .eq('id', id)
-            .select()
-            .single();
+            .select();
         if (error) throw error;
-        return data as CourseLesson;
+        return (data?.[0] || { id, ...updates }) as CourseLesson;
     },
 
     async deleteLesson(id: string) {

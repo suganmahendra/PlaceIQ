@@ -4,6 +4,7 @@ import { ArrowLeft, Plus, Layers, BookOpen, Save, Trash2, ChevronRight } from 'l
 import { cmsService, type Course, type CourseModule } from '../../../services/cmsService';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
+import toast from 'react-hot-toast';
 
 export function RoadmapEditor() {
     const { id } = useParams<{ id: string }>();
@@ -38,7 +39,7 @@ export function RoadmapEditor() {
             setModules(modulesData || []);
         } catch (error) {
             console.error('Failed to load roadmap data:', error);
-            alert('Failed to load roadmap');
+            toast.error('Failed to load roadmap. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -64,11 +65,13 @@ export function RoadmapEditor() {
                     thumbnail_url: course.thumbnail_url,
                     is_published: course.is_published
                 });
-                alert('Roadmap updated successfully!');
+                toast.success('✅ Roadmap saved successfully!');
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to save course:', error);
-            alert('Failed to save roadmap');
+            toast.error(error?.message?.includes('RLS') || error?.message?.includes('permission')
+                ? '⚠️ Permission denied — see console for Supabase RLS fix instructions.'
+                : 'Failed to save roadmap. Please try again.');
         } finally {
             setSaving(false);
         }
@@ -85,9 +88,10 @@ export function RoadmapEditor() {
             setModules([...modules, newModule]);
             setNewModuleTitle('');
             setIsAddingModule(false);
-        } catch (error) {
+            toast.success('Phase added!');
+        } catch (error: any) {
             console.error('Failed to add module:', error);
-            alert('Failed to add phase');
+            toast.error(error?.message || 'Failed to add phase.');
         }
     };
 
@@ -96,8 +100,10 @@ export function RoadmapEditor() {
         try {
             await cmsService.deleteModule(moduleId);
             setModules(modules.filter(m => m.id !== moduleId));
-        } catch (error) {
+            toast.success('Phase deleted.');
+        } catch (error: any) {
             console.error('Failed to delete module:', error);
+            toast.error(error?.message || 'Failed to delete phase.');
         }
     };
 

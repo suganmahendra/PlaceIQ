@@ -67,6 +67,9 @@ export function PlacementsPage() {
     const [error, setError] = useState<string | null>(null);
     const [search, setSearch] = useState('');
     const [filterTab, setFilterTab] = useState<FilterTab>('All');
+    const [jobTypeFilter, setJobTypeFilter] = useState<string>('All');
+    const [salaryFilter, setSalaryFilter] = useState<string>('All');
+    const [experienceFilter, setExperienceFilter] = useState<string>('All');
     const [applyingId, setApplyingId] = useState<string | null>(null);
 
     // Eligibility modal state
@@ -139,7 +142,42 @@ export function PlacementsPage() {
         const matchesSearch = !search ||
             r.title.toLowerCase().includes(search.toLowerCase()) ||
             r.companyName.toLowerCase().includes(search.toLowerCase());
-        return matchesTab && matchesSearch;
+
+        const matchesJobType = jobTypeFilter === 'All' || r.jobType === jobTypeFilter;
+
+        // Salary parsing for LPA filters
+        let matchesSalary = true;
+        if (salaryFilter !== 'All') {
+            if (r.salaryRange) {
+                const lpaMatch = r.salaryRange.match(/(\d+(?:\.\d+)?)/g);
+                if (lpaMatch) {
+                    const nums = lpaMatch.map(Number);
+                    const maxLpa = Math.max(...nums);
+                    if (salaryFilter === '< 5 LPA') matchesSalary = maxLpa < 5;
+                    else if (salaryFilter === '5 - 10 LPA') matchesSalary = maxLpa >= 5 && maxLpa <= 10;
+                    else if (salaryFilter === '10+ LPA') matchesSalary = maxLpa >= 10;
+                } else {
+                    matchesSalary = false; // Could not parse LPA numbers
+                }
+            } else {
+                matchesSalary = false; // missing salary data
+            }
+        }
+
+        // Quick parse for experience from title, desc, and type
+        let matchesExp = true;
+        if (experienceFilter !== 'All') {
+            const text = (r.title + " " + (r.description || "")).toLowerCase();
+            const isFresherKeyword = text.includes('fresh') || text.includes('0 year') || text.includes('0-1') || r.jobType?.toLowerCase() === 'internship';
+
+            if (experienceFilter === 'Fresher') {
+                matchesExp = isFresherKeyword;
+            } else if (experienceFilter === 'Experienced') {
+                matchesExp = !isFresherKeyword;
+            }
+        }
+
+        return matchesTab && matchesSearch && matchesJobType && matchesSalary && matchesExp;
     });
 
     const tabCounts: Record<FilterTab, number> = {
@@ -191,10 +229,10 @@ export function PlacementsPage() {
                 )}
 
                 {/* ── KPI Cards ──────────────────────────────────────────── */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                     <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="bg-green-100 p-2 rounded-lg">
+                            <div className="bg-green-100 p-2 rounded-lg shrink-0">
                                 <CheckCircle2 className="w-5 h-5 text-green-600" />
                             </div>
                             <h3 className="font-semibold text-gray-900 text-sm">Eligible Roles</h3>
@@ -206,7 +244,7 @@ export function PlacementsPage() {
 
                     <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="bg-primary/10 p-2 rounded-lg">
+                            <div className="bg-primary/10 p-2 rounded-lg shrink-0">
                                 <TrendingUp className="w-5 h-5 text-primary" />
                             </div>
                             <h3 className="font-semibold text-gray-900 text-sm">Avg Match</h3>
@@ -218,7 +256,7 @@ export function PlacementsPage() {
 
                     <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="bg-blue-100 p-2 rounded-lg">
+                            <div className="bg-blue-100 p-2 rounded-lg shrink-0">
                                 <Briefcase className="w-5 h-5 text-blue-600" />
                             </div>
                             <h3 className="font-semibold text-gray-900 text-sm">Total Roles</h3>
@@ -230,7 +268,7 @@ export function PlacementsPage() {
 
                     <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="bg-purple-100 p-2 rounded-lg">
+                            <div className="bg-purple-100 p-2 rounded-lg shrink-0">
                                 <Send className="w-5 h-5 text-purple-600" />
                             </div>
                             <h3 className="font-semibold text-gray-900 text-sm">Applied</h3>
@@ -265,32 +303,70 @@ export function PlacementsPage() {
                 )}
 
                 {/* ── Search + Filters ────────────────────────────────────── */}
-                <div className="flex flex-col sm:flex-row gap-4">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Search by role or company..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white"
-                        />
-                    </div>
+                <div className="flex flex-col space-y-4">
+                    <div className="flex flex-col sm:flex-row gap-4">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="Search by role or company..."
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white"
+                            />
+                        </div>
 
-                    <div className="flex items-center gap-2 overflow-x-auto pb-1">
-                        <Filter className="w-4 h-4 text-gray-400 shrink-0" />
-                        {(['All', 'Eligible', 'Almost Ready', 'Not Ready'] as FilterTab[]).map((tab) => (
-                            <button
-                                key={tab}
-                                onClick={() => setFilterTab(tab)}
-                                className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${filterTab === tab
+                        {/* Status Tabs */}
+                        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+                            <Filter className="w-4 h-4 text-gray-400 shrink-0 hidden sm:block" />
+                            {(['All', 'Eligible', 'Almost Ready', 'Not Ready'] as FilterTab[]).map((tab) => (
+                                <button
+                                    key={tab}
+                                    onClick={() => setFilterTab(tab)}
+                                    className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${filterTab === tab
                                         ? 'bg-primary text-white shadow-md'
                                         : 'bg-white border border-gray-200 text-gray-600 hover:border-primary/30'
-                                    }`}
-                            >
-                                {tab} {!loading && <span className="opacity-70">({tabCounts[tab]})</span>}
-                            </button>
-                        ))}
+                                        }`}
+                                >
+                                    {tab} {!loading && <span className="opacity-70">({tabCounts[tab]})</span>}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Secondary Dropdown Filters */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pb-2 border-b border-gray-100">
+                        <select
+                            value={jobTypeFilter}
+                            onChange={(e) => setJobTypeFilter(e.target.value)}
+                            className="w-full text-sm bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-gray-700 hover:border-primary/30 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 cursor-pointer transition-colors"
+                        >
+                            <option value="All">All Job Types</option>
+                            <option value="Full-time">Full-time</option>
+                            <option value="Internship">Internship</option>
+                            <option value="Contract">Contract</option>
+                        </select>
+
+                        <select
+                            value={salaryFilter}
+                            onChange={(e) => setSalaryFilter(e.target.value)}
+                            className="w-full text-sm bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-gray-700 hover:border-primary/30 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 cursor-pointer transition-colors"
+                        >
+                            <option value="All">Any Salary</option>
+                            <option value="< 5 LPA">&lt; 5 LPA</option>
+                            <option value="5 - 10 LPA">5 - 10 LPA</option>
+                            <option value="10+ LPA">10+ LPA</option>
+                        </select>
+
+                        <select
+                            value={experienceFilter}
+                            onChange={(e) => setExperienceFilter(e.target.value)}
+                            className="w-full text-sm bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-gray-700 hover:border-primary/30 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 cursor-pointer transition-colors"
+                        >
+                            <option value="All">Any Experience</option>
+                            <option value="Fresher">Fresher (0-1 Yrs)</option>
+                            <option value="Experienced">Experienced</option>
+                        </select>
                     </div>
                 </div>
 
@@ -324,8 +400,8 @@ export function PlacementsPage() {
                                 <div
                                     key={role.id}
                                     className={`bg-white rounded-2xl border-2 p-5 sm:p-6 hover:shadow-lg transition-all duration-200 ${role.eligibilityStatus === 'Eligible'
-                                            ? 'border-green-200 shadow-green-50 shadow-md'
-                                            : 'border-gray-200'
+                                        ? 'border-green-200 shadow-green-50 shadow-md'
+                                        : 'border-gray-200'
                                         }`}
                                 >
                                     <div className="flex flex-col sm:flex-row items-start gap-5">
@@ -417,8 +493,8 @@ export function PlacementsPage() {
                                                         <div
                                                             key={skill.skill}
                                                             className={`relative flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-medium transition-all ${skill.acquired
-                                                                    ? 'bg-green-50 border-green-200 text-green-700'
-                                                                    : 'bg-gray-50 border-gray-200 text-gray-600'
+                                                                ? 'bg-green-50 border-green-200 text-green-700'
+                                                                : 'bg-gray-50 border-gray-200 text-gray-600'
                                                                 }`}
                                                         >
                                                             {skill.acquired ? (

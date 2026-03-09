@@ -76,9 +76,7 @@ function getSkillStatus(level: number): 'Bright' | 'Average' | 'Weak' {
 // ─── Main Fetch ─────────────────────────────────────────────────────────────
 
 export async function fetchStudentAnalytics(studentId: string): Promise<AnalyticsData> {
-    const { monday, sunday } = getWeekBounds();
-    const weekStart = monday.toISOString();
-    const weekEnd = sunday.toISOString();
+    const { monday } = getWeekBounds();
 
     // Build date array Mon→Sun
     const weekDays: { day: string; date: string }[] = [];
@@ -195,13 +193,9 @@ export async function fetchStudentAnalytics(studentId: string): Promise<Analytic
     });
 
     // ── 6. Total weekly hours & avg ────────────────────────────────────────
-    const totalWeeklySecs = lessonProgressRows
-        .filter((lp) => {
-            if (!lp.last_watched_at) return false;
-            const d = lp.last_watched_at;
-            return d >= weekStart && d <= weekEnd;
-        })
-        .reduce((sum, lp) => sum + lp.watch_time_seconds, 0);
+    const totalWeeklySecs = weekDays.reduce(
+        (sum, { date }) => sum + (dailySecondsMap[date] ?? 0), 0
+    );
 
     const quizWeeklyHours = weekDays.reduce(
         (sum, { date }) => sum + (quizAttemptsByDay[date] ?? 0), 0
