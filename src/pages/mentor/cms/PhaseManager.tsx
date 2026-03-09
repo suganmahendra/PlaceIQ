@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash2, Edit2, Save } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Edit2, Save, FileText, Code } from 'lucide-react';
 import { cmsService, type CourseLesson } from '../../../services/cmsService';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
@@ -364,8 +364,8 @@ function TopicForm({ form, setForm, onSave, onCancel }: {
                         </div>
                         <AppEditor
                             key={activePage.id}
-                            initialContent={activePage.content}
-                            onChange={c => updateActivePage({ content: c })}
+                            initialContent={activePage.mode === 'html' ? activePage.htmlContent : activePage.content}
+                            onChange={c => updateActivePage({ content: c, mode: 'text', htmlContent: '' })}
                         />
                     </div>
                 </div>

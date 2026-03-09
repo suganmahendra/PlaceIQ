@@ -224,7 +224,7 @@ export function LessonPage() {
                 <div className="w-full max-w-4xl mx-auto px-6 pt-6 md:pt-8 pb-20">
                     <div className="min-h-[200px]">
                         {activePage ? (
-                            <AppViewer key={activePage.id} initialContent={activePage.content} />
+                            <AppViewer key={activePage.id} initialContent={activePage.mode === 'html' ? activePage.htmlContent : activePage.content} />
                         ) : (
                             <div className="flex items-center justify-center h-full text-gray-400">Loading Content...</div>
                         )}
