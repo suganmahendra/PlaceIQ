@@ -5,15 +5,16 @@ import {
     Phone,
     MapPin,
     Github,
-    Twitter,
     Linkedin,
     Send,
     HelpCircle,
     MessageCircle,
     ArrowRight
 } from 'lucide-react';
+import { useForm, ValidationError } from '@formspree/react';
 
 export const ContactPage: React.FC = () => {
+    const [state, handleSubmit] = useForm("xnjgjozr");
     return (
         <div className="min-h-screen pt-24 pb-20">
             <section className="container mx-auto px-4">
@@ -43,9 +44,9 @@ export const ContactPage: React.FC = () => {
                                     <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
                                         <Mail className="w-6 h-6" />
                                     </div>
-                                    <div>
+                                    <div className="overflow-hidden">
                                         <p className="text-sm font-bold text-text-muted uppercase tracking-widest mb-1">Email us</p>
-                                        <p className="text-lg font-bold">hello@placeiq.com</p>
+                                        <a href="mailto:suganmahendraanathi@gmail.com" className="text-sm md:text-lg font-bold hover:text-primary transition-colors truncate block">suganmahendraanathi@gmail.com</a>
                                     </div>
                                 </div>
 
@@ -55,7 +56,7 @@ export const ContactPage: React.FC = () => {
                                     </div>
                                     <div>
                                         <p className="text-sm font-bold text-text-muted uppercase tracking-widest mb-1">Call us</p>
-                                        <p className="text-lg font-bold">+1 (555) 000-0000</p>
+                                        <a href="https://wa.me/918008998312" target="_blank" rel="noopener noreferrer" className="text-lg font-bold hover:text-primary transition-colors block">+91 8008998312</a>
                                     </div>
                                 </div>
 
@@ -65,7 +66,7 @@ export const ContactPage: React.FC = () => {
                                     </div>
                                     <div>
                                         <p className="text-sm font-bold text-text-muted uppercase tracking-widest mb-1">Visit us</p>
-                                        <p className="text-lg font-bold">123 Creator Avenue, Innovation District, Tech City 94000</p>
+                                        <p className="text-lg font-bold">Tamilnadu, Salem</p>
                                     </div>
                                 </div>
                             </div>
@@ -74,12 +75,11 @@ export const ContactPage: React.FC = () => {
                                 <p className="text-sm font-bold text-text-muted uppercase tracking-widest mb-4 text-center">Follow our journey</p>
                                 <div className="flex justify-center gap-6">
                                     {[
-                                        { icon: <Github className="w-5 h-5" />, href: '#' },
-                                        { icon: <Twitter className="w-5 h-5" />, href: '#' },
+                                        { icon: <Github className="w-5 h-5" />, href: 'https://github.com/suganmahendra/PlaceIQ.git' },
                                         { icon: <Linkedin className="w-5 h-5" />, href: '#' },
                                         { icon: <MessageCircle className="w-5 h-5" />, href: '#' }
                                     ].map((social, i) => (
-                                        <a key={i} href={social.href} className="w-10 h-10 glass-card flex items-center justify-center rounded-xl hover:bg-primary hover:text-white transition-all transform hover:-translate-y-1">
+                                        <a key={i} href={social.href} target="_blank" rel="noopener noreferrer" className="w-10 h-10 glass-card flex items-center justify-center rounded-xl hover:bg-black/5 hover:text-primary transition-all transform hover:-translate-y-1">
                                             {social.icon}
                                         </a>
                                     ))}
@@ -104,61 +104,98 @@ export const ContactPage: React.FC = () => {
                     <div className="lg:col-span-2">
                         <div className="glass-panel p-10 md:p-16 rounded-[3rem]">
                             <h2 className="text-3xl font-bold mb-8 text-center md:text-left">Send us a <span className="text-primary">Message</span></h2>
-                            <form className="space-y-6">
-                                <div className="grid md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-bold px-1">First Name</label>
-                                        <input
-                                            type="text"
-                                            placeholder="Jane"
-                                            className="w-full px-6 py-4 bg-white/50 border border-black/5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all"
-                                        />
+                            {state.succeeded ? (
+                                <div className="bg-primary/5 border border-primary/20 p-8 rounded-3xl text-center space-y-4">
+                                    <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <Send className="w-8 h-8 text-primary" />
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-bold px-1">Last Name</label>
-                                        <input
-                                            type="text"
-                                            placeholder="Doe"
-                                            className="w-full px-6 py-4 bg-white/50 border border-black/5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all"
-                                        />
+                                    <h3 className="text-2xl font-bold text-text-primary">Successfully Sent!</h3>
+                                    <p className="text-lg text-text-secondary">Our team will contact you soon.</p>
+                                </div>
+                            ) : (
+                                <form onSubmit={handleSubmit} className="space-y-6">
+                                    <div className="grid md:grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold px-1">First Name</label>
+                                            <input
+                                                type="text"
+                                                name="firstName"
+                                                required
+                                                placeholder="Jane"
+                                                className="w-full px-6 py-4 bg-white/50 border border-black/5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold px-1">Last Name</label>
+                                            <input
+                                                type="text"
+                                                name="lastName"
+                                                required
+                                                placeholder="Doe"
+                                                className="w-full px-6 py-4 bg-white/50 border border-black/5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all"
+                                            />
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div className="space-y-2">
-                                    <label className="text-sm font-bold px-1">Email Address</label>
-                                    <input
-                                        type="email"
-                                        placeholder="jane@example.com"
-                                        className="w-full px-6 py-4 bg-white/50 border border-black/5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all"
-                                    />
-                                </div>
+                                    <div className="grid md:grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold px-1">Email Address</label>
+                                            <input
+                                                type="email"
+                                                name="email"
+                                                required
+                                                placeholder="jane@example.com"
+                                                className="w-full px-6 py-4 bg-white/50 border border-black/5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all"
+                                            />
+                                            <ValidationError prefix="Email" field="email" errors={state.errors} className="text-red-500 text-xs px-1" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold px-1">Phone Number</label>
+                                            <input
+                                                type="tel"
+                                                name="phone"
+                                                placeholder="+1 (555) 000-0000"
+                                                className="w-full px-6 py-4 bg-white/50 border border-black/5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all"
+                                            />
+                                            <ValidationError prefix="Phone" field="phone" errors={state.errors} className="text-red-500 text-xs px-1" />
+                                        </div>
+                                    </div>
 
-                                <div className="space-y-2">
-                                    <label className="text-sm font-bold px-1">Subject</label>
-                                    <select className="w-full px-6 py-4 bg-white/50 border border-black/5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all appearance-none cursor-pointer">
-                                        <option>General Inquiry</option>
-                                        <option>Course Support</option>
-                                        <option>Business Partnership</option>
-                                        <option>Mentor Program</option>
-                                    </select>
-                                </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold px-1">Subject</label>
+                                        <select name="subject" className="w-full px-6 py-4 bg-white/50 border border-black/5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all appearance-none cursor-pointer">
+                                            <option value="General Inquiry">General Inquiry</option>
+                                            <option value="Course Support">Course Support</option>
+                                            <option value="Business Partnership">Business Partnership</option>
+                                            <option value="Mentor Program">Mentor Program</option>
+                                            <option value="Want to Contribute">Want to Contribute</option>
+                                            <option value="Technical Support">Technical Support</option>
+                                            <option value="Feedback">Feedback</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
 
-                                <div className="space-y-2">
-                                    <label className="text-sm font-bold px-1">Message</label>
-                                    <textarea
-                                        rows={6}
-                                        placeholder="Tell us what you need help with..."
-                                        className="w-full px-6 py-4 bg-white/50 border border-black/5 rounded-3xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all resize-none"
-                                    ></textarea>
-                                </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold px-1">Message</label>
+                                        <textarea
+                                            name="message"
+                                            required
+                                            rows={6}
+                                            placeholder="Tell us what you need help with..."
+                                            className="w-full px-6 py-4 bg-white/50 border border-black/5 rounded-3xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all resize-none"
+                                        ></textarea>
+                                        <ValidationError prefix="Message" field="message" errors={state.errors} className="text-red-500 text-xs px-1" />
+                                    </div>
 
-                                <button
-                                    type="submit"
-                                    className="w-full py-5 bg-primary text-white rounded-2xl font-bold flex items-center justify-center gap-3 hover:gap-5 transition-all shadow-lg shadow-primary/30"
-                                >
-                                    Send Message <Send className="w-5 h-5" />
-                                </button>
-                            </form>
+                                    <button
+                                        type="submit"
+                                        disabled={state.submitting}
+                                        className="w-full py-5 bg-primary text-white rounded-2xl font-bold flex items-center justify-center gap-3 hover:gap-5 transition-all shadow-lg shadow-primary/30 disabled:opacity-70 disabled:cursor-not-allowed"
+                                    >
+                                        {state.submitting ? 'Sending...' : 'Send Message'} <Send className="w-5 h-5" />
+                                    </button>
+                                </form>
+                            )}
                         </div>
                     </div>
                 </div>
