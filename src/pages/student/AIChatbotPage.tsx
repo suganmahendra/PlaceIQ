@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Send, Bot, User as UserIcon, Sparkles } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { cn } from '../../lib/utils';
 
 interface Message {
@@ -41,10 +43,10 @@ export function AIChatbotPage() {
         setIsTyping(true);
 
         try {
-            // Prepare history for context
-            const history: { role: "user" | "model"; parts: { text: string }[] }[] = messages.map(msg => ({
-                role: msg.role === 'user' ? 'user' : 'model',
-                parts: [{ text: msg.content }]
+            // Prepare history for Groq (OpenAI-compatible)
+            const history = messages.map(msg => ({
+                role: msg.role,
+                content: msg.content
             }));
 
             const responseText = await aiService.sendMessage(input, history);
@@ -116,7 +118,20 @@ export function AIChatbotPage() {
                                         : 'bg-gray-100 text-gray-900'
                                 )}
                             >
-                                <p className="whitespace-pre-wrap">{message.content}</p>
+                                <ReactMarkdown
+                                    remarkPlugins={[remarkGfm]}
+                                    className="text-sm prose-sm prose-gray max-w-none"
+                                    components={{
+                                        p: ({ children }) => <p className="mb-2 last:mb-0 leading-relaxed">{children}</p>,
+                                        ul: ({ children }) => <ul className="list-disc ml-4 mb-2">{children}</ul>,
+                                        ol: ({ children }) => <ol className="list-decimal ml-4 mb-2">{children}</ol>,
+                                        li: ({ children }) => <li className="mb-1">{children}</li>,
+                                        code: ({ node, ...props }) => <code className="bg-gray-800 text-pink-400 px-1 rounded text-xs" {...props} />,
+                                        strong: ({ children }) => <strong className="font-extrabold">{children}</strong>
+                                    }}
+                                >
+                                    {message.content}
+                                </ReactMarkdown>
                                 <p
                                     className={cn(
                                         'text-xs mt-1',

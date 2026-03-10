@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import { X, Send, Sparkles } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { aiService } from '../../services/aiService';
 
 export function AIChatbot() {
@@ -49,13 +51,13 @@ export function AIChatbot() {
         setIsTyping(true);
 
         try {
-            // Convert messages for API history
-            const history: { role: "user" | "model"; parts: { text: string }[] }[] = messages.map(m => ({
-                role: m.sender === 'user' ? 'user' : 'model',
-                parts: [{ text: m.text }]
+            // Convert messages for API history (Groq/OpenAI compatible)
+            const history = messages.map(m => ({
+                role: m.sender === 'user' ? 'user' : 'assistant',
+                content: m.text
             }));
 
-            const response = await aiService.sendMessage(text, history);
+            const response = await aiService.sendMessage(text, history as any);
             setMessages(prev => [...prev, { text: response, sender: 'ai' }]);
         } catch (error) {
             console.error(error);
@@ -153,11 +155,23 @@ export function AIChatbot() {
                                     key={i}
                                     className={`flex ${msg.sender === 'ai' ? 'justify-start' : 'justify-end'}`}
                                 >
-                                    <div className={`max-w-[85%] p-4 rounded-2xl text-sm font-medium shadow-sm ${msg.sender === 'ai'
+                                    <div className={`max-w-[85%] p-4 rounded-2xl text-sm font-medium shadow-sm bubble-content ${msg.sender === 'ai'
                                         ? 'bg-white border border-white/60 text-text-primary rounded-tl-none shadow-sm'
                                         : 'bg-gradient-to-br from-primary to-secondary text-white rounded-tr-none shadow-md'
                                         }`}>
-                                        {msg.text}
+                                        <ReactMarkdown
+                                            remarkPlugins={[remarkGfm]}
+                                            components={{
+                                                p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                                                ul: ({ children }) => <ul className="list-disc ml-4 mb-2">{children}</ul>,
+                                                ol: ({ children }) => <ol className="list-decimal ml-4 mb-2">{children}</ol>,
+                                                li: ({ children }) => <li className="mb-1">{children}</li>,
+                                                code: ({ node, ...props }) => <code className="bg-gray-800 text-pink-400 px-1 rounded text-xs" {...props} />,
+                                                strong: ({ children }) => <strong className="font-extrabold">{children}</strong>
+                                            }}
+                                        >
+                                            {msg.text}
+                                        </ReactMarkdown>
                                     </div>
                                 </motion.div>
                             ))}

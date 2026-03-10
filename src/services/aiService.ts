@@ -1,14 +1,9 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+const API_KEY = import.meta.env.VITE_GROQ_API_KEY;
 
 if (!API_KEY) {
-    console.warn("VITE_GEMINI_API_KEY is not set in .env file");
+    console.warn("VITE_GROQ_API_KEY is not set in .env file");
 }
 
-const genAI = new GoogleGenerativeAI(API_KEY);
-
-// System instruction to guide the AI's behavior and knowledge base
 const SYSTEM_INSTRUCTION = `
 You are the AI Assistant for PlaceIQ, an advanced placement preparation platform for AI & Data Science students.
 Your goal is to help students with their learning journey, coding doubts, and placement preparation.
@@ -32,30 +27,46 @@ Constraints:
 `;
 
 export const aiService = {
-    async sendMessage(message: string, history: { role: "user" | "model"; parts: { text: string }[] }[] = []) {
+    async sendMessage(message: string, history: { role: "user" | "assistant"; content: string }[] = []) {
         if (!API_KEY) {
-            throw new Error("Gemini API Key is missing. Please add VITE_GEMINI_API_KEY to your .env file.");
+            throw new Error("Groq API Key is missing. Please add VITE_GROQ_API_KEY to your .env file.");
         }
 
         try {
-            const model = genAI.getGenerativeModel({
-                model: "gemini-1.5-flash",
-                systemInstruction: SYSTEM_INSTRUCTION
-            });
+            // Ensure history doesn't start with an assistant message if it's the first one
+            // Groq/OpenAI usually expect the first non-system message to be from the 'user'
+            let filteredHistory = [...history];
+            if (filteredHistory.length > 0 && filteredHistory[0].role === 'assistant') {
+                filteredHistory = filteredHistory.slice(1);
+            }
 
-            const chat = model.startChat({
-                history: history,
-                generationConfig: {
-                    maxOutputTokens: 1000,
+            const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${API_KEY}`,
+                    "Content-Type": "application/json"
                 },
+                body: JSON.stringify({
+                    model: "llama-3.3-70b-versatile",
+                    messages: [
+                        { role: "system", content: SYSTEM_INSTRUCTION },
+                        ...filteredHistory,
+                        { role: "user", content: message }
+                    ],
+                    max_tokens: 1000,
+                    temperature: 0.7
+                })
             });
 
-            const result = await chat.sendMessage(message);
-            const response = await result.response;
-            const text = response.text();
-            return text;
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error?.message || "Failed to get response from Groq");
+            }
+
+            const data = await response.json();
+            return data.choices[0].message.content;
         } catch (error) {
-            console.error("Error calling Gemini API:", error);
+            console.error("Error calling Groq API:", error);
             throw error;
         }
     }
