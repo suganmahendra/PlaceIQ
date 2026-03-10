@@ -74,6 +74,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 else console.error('Failed to auto-create student profile:', insertError);
             }
         } else {
+            if (userRole === 'student') {
+                try {
+                    const studentData = data as StudentProfile;
+                    // Self-healing: Ensure XP matches history for retroactive fixes
+                    const { data: history } = await supabase
+                        .from('xp_history')
+                        .select('amount')
+                        .eq('student_id', studentData.id);
+
+                    const trueXp = (history || []).reduce((acc, entry) => acc + (entry.amount || 0), 0);
+
+                    if (trueXp > (studentData.xp || 0)) {
+                        let level: "Beginner" | "Intermediate" | "Advanced" | "Expert" = 'Beginner';
+                        if (trueXp >= 150) level = 'Advanced';
+                        else if (trueXp >= 50) level = 'Intermediate';
+
+                        const { error: updateErr } = await supabase
+                            .from('students')
+                            .update({ xp: trueXp, level })
+                            .eq('id', studentData.id);
+
+                        if (!updateErr) {
+                            studentData.xp = trueXp;
+                            studentData.level = level;
+                            console.log(`[XP Sync] Auto-healed student profile to ${trueXp} XP (${level})`);
+                        }
+                    }
+                } catch (e) {
+                    console.error('Failed to sync XP history on load', e);
+                }
+            }
             setProfile(data);
         }
     }, []);

@@ -207,70 +207,69 @@ export const roadmapService = {
             if (enrollment?.student_id) {
                 const XP_PER_LESSON = 10;
 
-                // Helper: XP → level label (matches DB enum)
-                const getLevelFromXp = (xp: number) => {
-                    if (xp >= 150) return 'Advanced' as const;
-                    if (xp >= 50) return 'Intermediate' as const;
-                    return 'Beginner' as const;
-                };
+                // Lookup actual user_id from students table since RPC expects it
+                const { data: studentData } = await supabase
+                    .from('students')
+                    .select('user_id, xp')
+                    .eq('id', enrollment.student_id)
+                    .single();
 
-                // Try RPC first; fall back to direct update if RPC doesn't exist
-                let newXp = XP_PER_LESSON;
-                const { error: rpcError } = await supabase.rpc('increment_xp', {
-                    user_id: enrollment.student_id,
-                    amount: XP_PER_LESSON
-                });
+                if (studentData?.user_id) {
+                    // Helper: XP → level label (matches DB enum)
+                    const getLevelFromXp = (xp: number) => {
+                        if (xp >= 150) return 'Advanced' as const;
+                        if (xp >= 50) return 'Intermediate' as const;
+                        return 'Beginner' as const;
+                    };
 
-                if (rpcError) {
-                    // Fallback: fetch current XP then increment manually
-                    const { data: student } = await supabase
-                        .from('students')
-                        .select('xp')
-                        .eq('id', enrollment.student_id)
-                        .single();
+                    let newXp = (studentData.xp ?? 0) + XP_PER_LESSON;
 
-                    const currentXp = student?.xp ?? 0;
-                    newXp = currentXp + XP_PER_LESSON;
-                    const { error: updateError } = await supabase
-                        .from('students')
-                        .update({ xp: newXp, level: getLevelFromXp(newXp) })
-                        .eq('id', enrollment.student_id);
-
-                    if (updateError) {
-                        console.warn('[XP] students update failed:', updateError.message, updateError.details);
-                    } else {
-                        console.log(`[XP] Awarded ${XP_PER_LESSON} XP → student ${enrollment.student_id}, total: ${newXp}`);
-                    }
-                } else {
-                    // RPC succeeded — re-read new XP to recalc level
-                    const { data: updatedStudent } = await supabase
-                        .from('students')
-                        .select('xp')
-                        .eq('id', enrollment.student_id)
-                        .single();
-                    newXp = updatedStudent?.xp ?? XP_PER_LESSON;
-                    const { error: levelError } = await supabase
-                        .from('students')
-                        .update({ level: getLevelFromXp(newXp) })
-                        .eq('id', enrollment.student_id);
-                    if (levelError) {
-                        console.warn('[XP] level update failed:', levelError.message);
-                    }
-                    console.log(`[XP] RPC awarded XP → student ${enrollment.student_id}, total: ${newXp}`);
-                }
-
-                // Log to xp_history — non-blocking, 403 (no RLS policy) should not stop XP from being saved
-                try {
-                    const { error: historyError } = await supabase.from('xp_history').insert({
-                        student_id: enrollment.student_id,
-                        amount: XP_PER_LESSON,
-                        reason: 'Lesson Completed'
+                    // Try RPC first; fall back to direct update if RPC doesn't exist
+                    const { error: rpcError } = await supabase.rpc('increment_xp', {
+                        user_id: studentData.user_id,
+                        amount: XP_PER_LESSON
                     });
-                    if (historyError) {
-                        console.warn('[XP] xp_history log failed (add RLS INSERT policy):', historyError.message);
+
+                    if (rpcError) {
+                        // Fallback: direct update
+                        const { error: updateError } = await supabase
+                            .from('students')
+                            .update({ xp: newXp, level: getLevelFromXp(newXp) })
+                            .eq('id', enrollment.student_id);
+
+                        if (updateError) console.warn('[XP] students update failed:', updateError.message);
+                        else console.log(`[XP] Awarded ${XP_PER_LESSON} XP → student ${enrollment.student_id}, total: ${newXp}`);
+                    } else {
+                        // RPC succeeded — re-read new XP to recalc level securely
+                        const { data: updatedStudent } = await supabase
+                            .from('students')
+                            .select('xp')
+                            .eq('id', enrollment.student_id)
+                            .single();
+
+                        newXp = updatedStudent?.xp ?? newXp;
+                        const { error: levelError } = await supabase
+                            .from('students')
+                            .update({ level: getLevelFromXp(newXp) })
+                            .eq('id', enrollment.student_id);
+                        if (levelError) console.warn('[XP] level update failed:', levelError.message);
+                        console.log(`[XP] RPC awarded XP → student ${enrollment.student_id}, total: ${newXp}`);
                     }
-                } catch {
-                    // Non-critical — history table inaccessible, XP was still saved above
+
+                    // Log to xp_history — non-blocking
+
+                    try {
+                        const { error: historyError } = await supabase.from('xp_history').insert({
+                            student_id: enrollment.student_id,
+                            amount: XP_PER_LESSON,
+                            reason: 'Lesson Completed'
+                        });
+                        if (historyError) {
+                            console.warn('[XP] xp_history log failed (add RLS INSERT policy):', historyError.message);
+                        }
+                    } catch {
+                        // Non-critical — history table inaccessible, XP was still saved above
+                    }
                 }
             }
         }
