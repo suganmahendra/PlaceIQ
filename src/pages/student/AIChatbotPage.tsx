@@ -118,20 +118,21 @@ export function AIChatbotPage() {
                                         : 'bg-gray-100 text-gray-900'
                                 )}
                             >
-                                <ReactMarkdown
-                                    remarkPlugins={[remarkGfm]}
-                                    className="text-sm prose-sm prose-gray max-w-none"
-                                    components={{
-                                        p: ({ children }) => <p className="mb-2 last:mb-0 leading-relaxed">{children}</p>,
-                                        ul: ({ children }) => <ul className="list-disc ml-4 mb-2">{children}</ul>,
-                                        ol: ({ children }) => <ol className="list-decimal ml-4 mb-2">{children}</ol>,
-                                        li: ({ children }) => <li className="mb-1">{children}</li>,
-                                        code: ({ node, ...props }) => <code className="bg-gray-800 text-pink-400 px-1 rounded text-xs" {...props} />,
-                                        strong: ({ children }) => <strong className="font-extrabold">{children}</strong>
-                                    }}
-                                >
-                                    {message.content}
-                                </ReactMarkdown>
+                                <div className="text-sm prose-sm prose-gray max-w-none">
+                                    <ReactMarkdown
+                                        remarkPlugins={[remarkGfm]}
+                                        components={{
+                                            p: ({ children }) => <p className="mb-2 last:mb-0 leading-relaxed">{children}</p>,
+                                            ul: ({ children }) => <ul className="list-disc ml-4 mb-2">{children}</ul>,
+                                            ol: ({ children }) => <ol className="list-decimal ml-4 mb-2">{children}</ol>,
+                                            li: ({ children }) => <li className="mb-1">{children}</li>,
+                                            code: ({ node, ...props }) => <code className="bg-gray-800 text-pink-400 px-1 rounded text-xs" {...props} />,
+                                            strong: ({ children }) => <strong className="font-extrabold">{children}</strong>
+                                        }}
+                                    >
+                                        {message.content}
+                                    </ReactMarkdown>
+                                </div>
                                 <p
                                     className={cn(
                                         'text-xs mt-1',
