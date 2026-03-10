@@ -92,13 +92,29 @@ export function CreateStandaloneQuizPanel() {
                                     className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
                                 >
                                     {copiedId === quiz.id ? <CheckCircle className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
-                                    {copiedId === quiz.id ? 'Copied' : 'Copy Link'}
+                                    {copiedId === quiz.id ? 'Copied' : 'Copy'}
                                 </button>
                                 <button
                                     onClick={() => setEditingQuizId(quiz.id)}
                                     className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors"
                                 >
                                     Edit
+                                </button>
+                                <button
+                                    onClick={async () => {
+                                        if (window.confirm('Are you sure you want to delete this quiz?')) {
+                                            try {
+                                                await quizService.deleteQuiz(quiz.id);
+                                                toast.success('Quiz deleted successfully');
+                                                loadQuizzes();
+                                            } catch (e: any) {
+                                                toast.error('Failed to delete quiz');
+                                            }
+                                        }
+                                    }}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                                >
+                                    Delete
                                 </button>
                             </div>
                         </div>

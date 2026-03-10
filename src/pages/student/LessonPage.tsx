@@ -199,110 +199,108 @@ export function LessonPage() {
     const isLastPage = activePageIdx === pages.length - 1;
 
     return (
-        <div className="min-h-screen bg-white flex flex-col">
-            {/* Top Navigation Bar */}
-            <div className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-20 shadow-sm flex items-center justify-between">
+        <div className="min-h-screen bg-white flex flex-col pb-24">
+            {/* ── Top Navigation Bar ── */}
+            <div className="bg-white border-b border-gray-200 px-4 sm:px-6 py-4 sticky top-0 z-20 shadow-sm flex items-center justify-between gap-4">
                 <Link
                     to={`/student/courses/${courseSlug}`}
-                    className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors font-medium text-sm"
+                    className="inline-flex items-center gap-1.5 text-gray-500 hover:text-gray-900 transition-colors font-medium text-sm shrink-0"
                 >
                     <ChevronLeft className="w-5 h-5" />
                     Back to Curriculum
                 </Link>
-                <div className="text-center absolute left-1/2 -translate-x-1/2 hidden md:block">
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{course.title}</p>
-                    <h1 className="text-base font-black text-gray-900">{lesson.title}</h1>
+                <div className="text-center hidden md:block flex-1 min-w-0">
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest truncate">{course.title}</p>
+                    <h1 className="text-base font-black text-gray-900 truncate">{lesson.title}</h1>
                 </div>
-                <div className="text-sm font-bold text-gray-400">
+                <div className="text-sm font-bold text-gray-400 shrink-0">
                     Page {activePageIdx + 1} of {pages.length}
                 </div>
             </div>
 
-            {/* Main Content Area */}
-            <div className="flex-1 flex flex-col items-center w-full">
-                {/* Document Viewer */}
-                <div className="w-full max-w-4xl mx-auto px-6 pt-6 md:pt-8 pb-20">
-                    <div className="min-h-[200px]">
-                        {activePage ? (
-                            <AppViewer key={activePage.id} initialContent={activePage.mode === 'html' ? activePage.htmlContent : activePage.content} />
+            {/* ── Main Content ── */}
+            <div className="flex-1 w-full max-w-4xl mx-auto px-4 sm:px-6 pt-6 md:pt-10">
+                {activePage ? (
+                    <AppViewer key={activePage.id} initialContent={activePage.mode === 'html' ? activePage.htmlContent : activePage.content} />
+                ) : (
+                    <div className="flex items-center justify-center h-40 text-gray-400">Loading Content...</div>
+                )}
+            </div>
+
+            {/* ── Sticky Bottom Navigation Bar ── */}
+            <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-[0_-4px_24px_rgba(0,0,0,0.06)]">
+                <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+
+                    {/* LEFT: Previous */}
+                    <div className="flex-1 flex justify-start">
+                        {!isFirstPage ? (
+                            <button
+                                className="flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-gray-900 px-3 py-2 rounded-xl hover:bg-gray-50 transition-colors"
+                                onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); setActivePageIdx(prev => Math.max(0, prev - 1)); }}
+                            >
+                                <ChevronLeft className="w-4 h-4" /> Previous Page
+                            </button>
+                        ) : prevLessonSlug ? (
+                            <Link
+                                to={`/student/courses/${courseSlug}/${prevLessonSlug}`}
+                                className="flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-gray-900 px-3 py-2 rounded-xl hover:bg-gray-50 transition-colors"
+                            >
+                                <ChevronLeft className="w-4 h-4" /> Previous Topic
+                            </Link>
                         ) : (
-                            <div className="flex items-center justify-center h-full text-gray-400">Loading Content...</div>
+                            <div className="w-8" />
                         )}
                     </div>
 
-                    {/* Pagination Controls */}
-                    <div className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    {/* CENTER: Completion / Quiz */}
+                    {isLastPage && (
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                            <Button
+                                className={`h-10 px-5 font-bold rounded-xl text-sm shadow-sm ${isLessonCompleted(lesson.id)
+                                        ? 'bg-green-600 text-white hover:bg-green-700'
+                                        : 'bg-gray-900 text-white hover:bg-gray-800'
+                                    }`}
+                                onClick={handleMarkComplete}
+                                isLoading={isCompleting}
+                                disabled={isLessonCompleted(lesson.id) || !enrollment}
+                            >
+                                {isLessonCompleted(lesson.id) ? (
+                                    <><CheckCircle2 className="w-4 h-4 mr-1.5 inline" /> Completed</>
+                                ) : 'Mark Complete'}
+                            </Button>
 
-                        {/* LEFT SIDE: Previous Actions */}
-                        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto items-center justify-center sm:justify-start">
-                            {!isFirstPage ? (
-                                <button
-                                    className="font-medium text-gray-500 hover:text-gray-900 border-b border-transparent hover:border-gray-900 transition-colors flex items-center gap-1"
-                                    onClick={() => {
-                                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                                        setActivePageIdx(prev => Math.max(0, prev - 1));
-                                    }}
+                            {isLessonCompleted(lesson.id) && quiz && (
+                                <Button
+                                    className="h-10 px-5 font-bold rounded-xl text-sm bg-gradient-to-r from-yellow-400 to-orange-500 text-white shadow-sm hover:scale-[1.02] transition-transform"
+                                    onClick={() => navigate(`/student/quiz?id=${quiz.id}`)}
                                 >
-                                    <ChevronLeft className="w-4 h-4 ml-[-4px]" /> Previous Page
-                                </button>
-                            ) : prevLessonSlug ? (
-                                <Link
-                                    to={`/student/courses/${courseSlug}/${prevLessonSlug}`}
-                                    className="font-medium text-gray-500 hover:text-gray-900 border-b border-transparent hover:border-gray-900 transition-colors flex items-center gap-1"
-                                >
-                                    <ChevronLeft className="w-4 h-4 ml-[-4px]" /> Previous Topic
-                                </Link>
-                            ) : (
-                                <div className="hidden sm:block w-[120px]"></div> // Spacer
+                                    Take Quiz
+                                </Button>
                             )}
                         </div>
+                    )}
 
-                        {/* RIGHT SIDE: Next Actions */}
-                        <div className="flex flex-col sm:flex-row gap-6 w-full sm:w-auto items-center justify-center sm:justify-end mt-8 sm:mt-0">
-                            {!isLastPage ? (
-                                <button
-                                    className="font-medium text-primary hover:text-primary/80 border-b border-transparent hover:border-primary/80 transition-colors flex items-center gap-1"
-                                    onClick={() => {
-                                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                                        setActivePageIdx(prev => Math.min(pages.length - 1, prev + 1));
-                                    }}
-                                >
-                                    Next Page <ChevronRight className="w-4 h-4 mr-[-4px]" />
-                                </button>
-                            ) : (
-                                <div className="flex flex-col sm:flex-row items-center gap-4">
-                                    <Button
-                                        className="h-10 px-6 font-bold rounded-xl text-sm shadow-md shadow-primary/10 w-full sm:w-auto text-white bg-gray-900"
-                                        onClick={handleMarkComplete}
-                                        isLoading={isCompleting}
-                                        disabled={isLessonCompleted(lesson.id) || !enrollment}
-                                    >
-                                        {isLessonCompleted(lesson.id) ? (
-                                            <><CheckCircle2 className="w-4 h-4 mr-1.5" /> Completed</>
-                                        ) : 'Mark as Complete'}
-                                    </Button>
-
-                                    {isLessonCompleted(lesson.id) && quiz && (
-                                        <Button
-                                            className="h-10 px-6 font-bold rounded-xl text-sm bg-gradient-to-r from-yellow-400 to-orange-500 text-white shadow-md shadow-orange-200 hover:scale-[1.02] transition-transform animate-pulse w-full sm:w-auto"
-                                            onClick={() => navigate(`/student/quiz?id=${quiz.id}`)}
-                                        >
-                                            Take Quiz
-                                        </Button>
-                                    )}
-
-                                    {isLessonCompleted(lesson.id) && nextLessonSlug && (
-                                        <Link
-                                            to={`/student/courses/${courseSlug}/${nextLessonSlug}`}
-                                            className="font-medium text-primary hover:text-primary/80 border-b border-transparent hover:border-primary/80 transition-colors flex items-center gap-1 ml-2"
-                                        >
-                                            Next Topic <ChevronRight className="w-4 h-4 mr-[-4px]" />
-                                        </Link>
-                                    )}
-                                </div>
-                            )}
-                        </div>
+                    {/* RIGHT: Next */}
+                    <div className="flex-1 flex justify-end">
+                        {!isLastPage ? (
+                            <button
+                                className="flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary/70 px-3 py-2 rounded-xl hover:bg-primary/5 transition-colors"
+                                onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); setActivePageIdx(prev => Math.min(pages.length - 1, prev + 1)); }}
+                            >
+                                Next Page <ChevronRight className="w-4 h-4" />
+                            </button>
+                        ) : isLessonCompleted(lesson.id) && nextLessonSlug ? (
+                            <Link
+                                to={`/student/courses/${courseSlug}/${nextLessonSlug}`}
+                                className="flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary/70 px-3 py-2 rounded-xl hover:bg-primary/5 transition-colors"
+                            >
+                                Next Topic <ChevronRight className="w-4 h-4" />
+                            </Link>
+                        ) : (
+                            <div className="w-8" />
+                        )}
                     </div>
+
                 </div>
             </div>
         </div>

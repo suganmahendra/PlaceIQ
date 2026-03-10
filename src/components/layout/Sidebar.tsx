@@ -47,7 +47,7 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
     const location = useLocation();
     const navigate = useNavigate();
     const { role, signOut } = useAuth();
-    const { unreadCount, clearUnread } = useNotifications();
+    const { unreadCount, clearUnread, unreadQuizCount, clearUnreadQuizzes } = useNotifications();
 
     // Determine which links to show based on the user's role
     const sidebarLinks = role === 'mentor' ? mentorLinks : studentLinks;
@@ -115,6 +115,7 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
                                     onClick={() => {
                                         setMobileOpen(false);
                                         if (link.path === '/student/announcements') clearUnread();
+                                        if (link.path === '/student/quiz') clearUnreadQuizzes();
                                     }}
                                     className={cn(
                                         "flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group relative",
@@ -133,6 +134,16 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
                                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                                             <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500 items-center justify-center">
                                                 <span className="text-[8px] font-bold text-white">{unreadCount > 9 ? '9+' : unreadCount}</span>
+                                            </span>
+                                        </span>
+                                    )}
+
+                                    {/* Badge on Quizzes for students */}
+                                    {!collapsed && link.path === '/student/quiz' && role === 'student' && unreadQuizCount > 0 && (
+                                        <span className="relative flex h-4 w-4 ml-auto">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-4 w-4 bg-indigo-500 items-center justify-center">
+                                                <span className="text-[8px] font-bold text-white">{unreadQuizCount > 9 ? '9+' : unreadQuizCount}</span>
                                             </span>
                                         </span>
                                     )}

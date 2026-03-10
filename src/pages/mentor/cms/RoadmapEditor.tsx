@@ -9,7 +9,8 @@ import toast from 'react-hot-toast';
 export function RoadmapEditor() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const isNew = id === 'new';
+    // isNew is true when no ID is in URL (the /mentor/cms/new route) OR explicitly set to 'new'
+    const isNew = !id || id === 'new';
 
     const [course, setCourse] = useState<Partial<Course>>({
         title: '',

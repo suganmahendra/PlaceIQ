@@ -32,8 +32,27 @@ export function ProfilePage() {
         bio: '',
         github: '',
         linkedin: '',
-        portfolio: ''
+        portfolio: '',
+        current_semester: 1
     });
+
+    // Same calculation as DashboardHome so both pages agree
+    const calculateProfileCompletion = () => {
+        if (!profile || !('xp' in profile)) return 0;
+        const p = profile as any;
+        const requiredFields = [
+            p.full_name,
+            p.email,
+            p.department_id,
+            p.register_number,
+            p.bio,
+            p.resume_url,
+            p.avatar_url
+        ];
+        const filledCount = requiredFields.filter(f => f !== null && f !== undefined && f !== '').length;
+        const hasSocials = p.social_links && typeof p.social_links === 'object' && Object.keys(p.social_links).some((k: string) => !!(p.social_links as any)[k]) ? 1 : 0;
+        return Math.round(((filledCount + hasSocials) / (requiredFields.length + 1)) * 100);
+    };
 
     useEffect(() => {
         if (profile && 'xp' in profile) {
@@ -42,7 +61,8 @@ export function ProfilePage() {
                 bio: profile.bio || '',
                 github: (profile.social_links as any)?.github || '',
                 linkedin: (profile.social_links as any)?.linkedin || '',
-                portfolio: (profile.social_links as any)?.portfolio || ''
+                portfolio: (profile.social_links as any)?.portfolio || '',
+                current_semester: (profile as any).current_semester || 1
             });
         }
     }, [profile]);
@@ -54,6 +74,7 @@ export function ProfilePage() {
             const updates = {
                 full_name: formData.full_name,
                 bio: formData.bio,
+                current_semester: formData.current_semester,
                 social_links: {
                     github: formData.github,
                     linkedin: formData.linkedin,
@@ -385,18 +406,32 @@ export function ProfilePage() {
                                         <Book className="w-4 h-4 text-gray-400" />
                                         <span className="font-semibold text-gray-700 text-sm">Current Semester</span>
                                     </div>
-                                    <p className="text-gray-900 text-sm pl-6">6th Semester</p>
+                                    {isEditing ? (
+                                        <select
+                                            value={formData.current_semester}
+                                            onChange={e => setFormData({ ...formData, current_semester: Number(e.target.value) })}
+                                            className="ml-6 mt-1 text-sm rounded-lg border border-gray-200 px-2 py-1.5 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 outline-none bg-white text-gray-900 w-32"
+                                        >
+                                            {[1, 2, 3, 4, 5, 6, 7, 8].map(s => (
+                                                <option key={s} value={s}>{s}{s === 1 ? 'st' : s === 2 ? 'nd' : s === 3 ? 'rd' : 'th'} Semester</option>
+                                            ))}
+                                        </select>
+                                    ) : (
+                                        <p className="text-gray-900 text-sm pl-6">
+                                            {formData.current_semester}{formData.current_semester === 1 ? 'st' : formData.current_semester === 2 ? 'nd' : formData.current_semester === 3 ? 'rd' : 'th'} Semester
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         </div>
 
                         {/* Right Sidebar */}
                         <div className="space-y-5">
-                            {/* Profile Completion */}
+                            {/* Profile Completion — same dynamic calculation as Dashboard */}
                             <div className="bg-white rounded-2xl border border-gray-200 p-5">
                                 <h3 className="font-bold text-gray-900 mb-4 text-sm">Profile Completion</h3>
                                 <div className="flex justify-center mb-4">
-                                    <ProgressRing progress={profile.profile_completion || 30} size="lg" />
+                                    <ProgressRing progress={calculateProfileCompletion()} size="lg" />
                                 </div>
                                 <p className="text-center text-xs text-gray-500">Complete your profile to unlock more features!</p>
                             </div>

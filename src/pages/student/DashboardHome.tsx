@@ -68,7 +68,7 @@ export function DashboardHome() {
         ];
 
         const filledCount = requiredFields.filter(field => field !== null && field !== undefined && field !== '').length;
-        const hasSocials = p.social_links && typeof p.social_links === 'object' && Object.keys(p.social_links).length > 0 ? 1 : 0;
+        const hasSocials = p.social_links && typeof p.social_links === 'object' && Object.keys(p.social_links).some((k: string) => !!(p.social_links as any)[k]) ? 1 : 0;
 
         const totalFields = requiredFields.length + 1;
         return Math.round(((filledCount + hasSocials) / totalFields) * 100);

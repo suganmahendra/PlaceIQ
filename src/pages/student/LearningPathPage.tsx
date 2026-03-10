@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, Sparkles } from 'lucide-react';
+import { BookOpen, Sparkles, Search, X } from 'lucide-react';
 import { CourseCard } from '../../components/courses/CourseCard';
 import { useAuth } from '../../contexts/AuthContext';
 import { roadmapService } from '../../services/RoadmapService';
@@ -15,6 +15,7 @@ export const LearningPathPage: React.FC = () => {
     const [loading, setLoading] = useState(false);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [enrollments, setEnrollments] = useState<any[]>([]);
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         loadRoadmaps();
@@ -58,6 +59,11 @@ export const LearningPathPage: React.FC = () => {
         return enrollment?.status === 'completed';
     };
 
+    // Case-insensitive client-side filter by title
+    const filteredCourses = courses.filter(c =>
+        c.title.toLowerCase().includes(searchQuery.toLowerCase().trim())
+    );
+
     return (
         <div className="min-h-screen p-4 md:p-8 space-y-8 relative overflow-hidden">
             {/* Background Ambience */}
@@ -86,6 +92,7 @@ export const LearningPathPage: React.FC = () => {
                 >
                     Your <span className="text-primary italic font-serif">Learning Path</span>
                 </motion.h1>
+
                 <motion.p
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -94,6 +101,41 @@ export const LearningPathPage: React.FC = () => {
                 >
                     A unified journey to master both coding fundamentals and advanced AI courses.
                 </motion.p>
+
+                {/* ── Search Bar ── */}
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="max-w-md mx-auto mt-2"
+                >
+                    <div className="relative group">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-primary transition-colors pointer-events-none" />
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                            placeholder="Search courses by title..."
+                            className="w-full pl-11 pr-10 py-3 rounded-2xl bg-white/70 backdrop-blur-md border border-white/60 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 text-sm text-gray-800 placeholder-gray-400 transition-all"
+                        />
+                        {searchQuery && (
+                            <button
+                                onClick={() => setSearchQuery('')}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                                aria-label="Clear search"
+                            >
+                                <X className="w-3.5 h-3.5" />
+                            </button>
+                        )}
+                    </div>
+                    {searchQuery && (
+                        <p className="text-xs text-gray-400 mt-2 text-center">
+                            {filteredCourses.length === 0
+                                ? 'No courses match your search'
+                                : `${filteredCourses.length} course${filteredCourses.length !== 1 ? 's' : ''} found`}
+                        </p>
+                    )}
+                </motion.div>
             </div>
 
             {/* Content Area */}
@@ -102,19 +144,19 @@ export const LearningPathPage: React.FC = () => {
                     <div className="flex justify-center py-20">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
                     </div>
-                ) : courses.length === 0 ? (
+                ) : filteredCourses.length === 0 ? (
                     <div className="text-center py-12 text-gray-500">
-                        No courses available at the moment. Check back later!
+                        {searchQuery
+                            ? <>No courses found for <span className="font-semibold text-gray-700">"{searchQuery}"</span>. Try a different search.</>
+                            : 'No courses available at the moment. Check back later!'}
                     </div>
                 ) : (
                     <div
                         className="grid gap-5"
                         style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
                     >
-                        {courses.map((course) => {
-                            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                        {filteredCourses.map((course) => {
                             const IconComponent = BookOpen;
-
                             return (
                                 <CourseCard
                                     key={course.id}
@@ -122,7 +164,7 @@ export const LearningPathPage: React.FC = () => {
                                     name={course.title}
                                     slug={course.slug}
                                     description={course.description}
-                                    difficulty={course.difficulty as any}
+                                    difficulty={course.difficulty as any}  // eslint-disable-line @typescript-eslint/no-explicit-any
                                     estimatedHours={course.estimated_hours || 0}
                                     progress={getCourseProgress(course.id)}
                                     icon={IconComponent}
