@@ -61,6 +61,9 @@ export function LessonPage() {
     const [loading, setLoading] = useState(true);
     const [isCompleting, setIsCompleting] = useState(false);
 
+    // Timer for accurate ML watch-time inputs
+    const [startTime, setStartTime] = useState<number>(Date.now());
+
     const [pages, setPages] = useState<LessonPageData[]>([]);
     const [activePageIdx, setActivePageIdx] = useState(0);
 
@@ -71,6 +74,7 @@ export function LessonPage() {
     useEffect(() => {
         setActivePageIdx(0);
         setPages([]);
+        setStartTime(Date.now());
     }, [lessonSlug]);
 
     useEffect(() => {
@@ -147,8 +151,13 @@ export function LessonPage() {
     const handleMarkComplete = async () => {
         if (!enrollment || !lesson) return;
         setIsCompleting(true);
+
+        // Calculate true watch time dynamically
+        const now = Date.now();
+        const elapsedSeconds = Math.round((now - startTime) / 1000);
+
         try {
-            await roadmapService.updateLessonProgress(enrollment.id, lesson.id, 0, true);
+            await roadmapService.updateLessonProgress(enrollment.id, lesson.id, elapsedSeconds, true);
             await refreshProfile();
 
             toast.custom((t) => (
@@ -236,7 +245,11 @@ export function LessonPage() {
                         {!isFirstPage ? (
                             <button
                                 className="flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-gray-900 px-3 py-2 rounded-xl hover:bg-gray-50 transition-colors"
-                                onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); setActivePageIdx(prev => Math.max(0, prev - 1)); }}
+                                onClick={() => {
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                    setActivePageIdx(prev => Math.max(0, prev - 1));
+                                    // Don't reset time here, keep accumulating for the whole lesson viewing session 
+                                }}
                             >
                                 <ChevronLeft className="w-4 h-4" /> Previous Page
                             </button>
@@ -257,8 +270,8 @@ export function LessonPage() {
                         <div className="flex items-center gap-2 flex-shrink-0">
                             <Button
                                 className={`h-10 px-5 font-bold rounded-xl text-sm shadow-sm ${isLessonCompleted(lesson.id)
-                                        ? 'bg-green-600 text-white hover:bg-green-700'
-                                        : 'bg-gray-900 text-white hover:bg-gray-800'
+                                    ? 'bg-green-600 text-white hover:bg-green-700'
+                                    : 'bg-gray-900 text-white hover:bg-gray-800'
                                     }`}
                                 onClick={handleMarkComplete}
                                 isLoading={isCompleting}
@@ -285,7 +298,10 @@ export function LessonPage() {
                         {!isLastPage ? (
                             <button
                                 className="flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary/70 px-3 py-2 rounded-xl hover:bg-primary/5 transition-colors"
-                                onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); setActivePageIdx(prev => Math.min(pages.length - 1, prev + 1)); }}
+                                onClick={() => {
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                    setActivePageIdx(prev => Math.min(pages.length - 1, prev + 1));
+                                }}
                             >
                                 Next Page <ChevronRight className="w-4 h-4" />
                             </button>

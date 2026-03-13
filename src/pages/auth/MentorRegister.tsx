@@ -234,34 +234,7 @@ export function MentorRegister() {
                         </form>
                     )}
 
-                    <div className="mt-8">
-                        <div className="relative">
-                            <div className="absolute inset-0 flex items-center">
-                                <span className="w-full border-t border-gray-100" />
-                            </div>
-                            <div className="relative flex justify-center text-[10px] uppercase">
-                                <span className="bg-[#FAF5FF] px-4 text-text-muted font-black tracking-[0.2em]">Verified Professional Login</span>
-                            </div>
-                        </div>
 
-                        <div className="mt-6">
-                            <button
-                                type="button"
-                                onClick={async () => {
-                                    try {
-                                        await authService.signInWithGoogleMentor();
-                                    } catch (err) {
-                                        console.error('Google sign-in error:', err);
-                                        setError('Failed to sign in with Google. Please try again.');
-                                    }
-                                }}
-                                className="w-full h-14 flex items-center justify-center gap-3 px-4 py-3 border-2 border-white/80 bg-white/20 hover:bg-white/50 rounded-2xl transition-all duration-300 group"
-                            >
-                                <Chrome className="w-6 h-6 text-primary group-hover:rotate-12 transition-transform" />
-                                <span className="text-text-primary font-bold">Register with Google Workspace</span>
-                            </button>
-                        </div>
-                    </div>
 
                     <div className="mt-8 text-center text-sm font-medium">
                         <Link to="/login-mentor" className="text-text-muted hover:text-primary transition-colors">

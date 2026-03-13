@@ -60,11 +60,10 @@ export function DashboardHome() {
         const requiredFields = [
             p.full_name,
             p.email,
-            p.department_id,
             p.register_number,
             p.bio,
-            p.resume_url,
-            p.avatar_url
+            p.avatar_url,
+            p.current_semester
         ];
 
         const filledCount = requiredFields.filter(field => field !== null && field !== undefined && field !== '').length;
@@ -244,7 +243,18 @@ export function DashboardHome() {
                                 {/* Simple visual representation of radar/pie chart */}
                                 <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
                                     <circle cx="50" cy="50" r="45" fill="none" stroke="#F3F4F6" strokeWidth="10" />
-                                    <circle cx="50" cy="50" r="45" fill="none" stroke="#6A0DAD" strokeWidth="10" strokeDasharray="220" strokeDashoffset="50" strokeLinecap="round" className="animate-[dash_1s_ease-out_forwards]" />
+                                    <circle
+                                        cx="50"
+                                        cy="50"
+                                        r="45"
+                                        fill="none"
+                                        stroke="#6A0DAD"
+                                        strokeWidth="10"
+                                        strokeDasharray="283"
+                                        strokeDashoffset={283 * (1 - (studentProfile?.readiness_score || 0) / 100)}
+                                        strokeLinecap="round"
+                                        className="transition-all duration-1000 ease-out"
+                                    />
                                 </svg>
                                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                                     <span className="text-3xl font-bold text-gray-900">{studentProfile?.readiness_score || 0}%</span>

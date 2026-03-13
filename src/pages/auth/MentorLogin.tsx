@@ -117,34 +117,7 @@ export function MentorLogin() {
                         </Button>
                     </form>
 
-                    <div className="mt-8">
-                        <div className="relative">
-                            <div className="absolute inset-0 flex items-center">
-                                <span className="w-full border-t border-gray-100" />
-                            </div>
-                            <div className="relative flex justify-center text-[10px] uppercase">
-                                <span className="bg-[#FAF5FF] px-4 text-text-muted font-black tracking-widest">Professional Identity</span>
-                            </div>
-                        </div>
 
-                        <div className="mt-6">
-                            <button
-                                type="button"
-                                onClick={async () => {
-                                    try {
-                                        await authService.signInWithGoogleMentor();
-                                    } catch (err) {
-                                        console.error('Google sign-in error:', err);
-                                        setError('Failed to sign in with Google. Please try again.');
-                                    }
-                                }}
-                                className="w-full h-14 flex items-center justify-center gap-3 px-4 py-3 border-2 border-white/80 bg-white/40 hover:bg-white/70 rounded-2xl transition-all duration-300 group shadow-sm"
-                            >
-                                <Chrome className="w-6 h-6 text-primary group-hover:rotate-12 transition-transform" />
-                                <span className="text-text-primary font-bold">Sign in with Workspace</span>
-                            </button>
-                        </div>
-                    </div>
 
                     <div className="mt-10 pt-6 border-t border-white/20 text-center">
                         <p className="text-sm text-text-secondary font-medium">

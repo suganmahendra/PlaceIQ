@@ -9,6 +9,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { fetchStudentAnalytics } from '../../services/AnalyticsService';
 import type { AnalyticsData } from '../../services/AnalyticsService';
 import type { Database } from '../../types/database.types';
+import { formatHoursToTime } from '../../lib/utils';
 
 type StudentProfile = Database['public']['Tables']['students']['Row'];
 
@@ -123,7 +124,7 @@ export function AnalyticsPage() {
                         {loading
                             ? <Skeleton className="h-9 w-24 mt-1" />
                             : <p className="text-2xl sm:text-3xl font-bold text-blue-600">
-                                {data?.totalWeeklyHours ?? 0}h
+                                {data ? formatHoursToTime(data.totalWeeklyHours) : '0m'}
                             </p>
                         }
                         <p className="text-xs sm:text-sm text-gray-600 mt-1">Total learning time</p>
@@ -178,7 +179,7 @@ export function AnalyticsPage() {
                         {loading
                             ? <Skeleton className="h-9 w-20 mt-1" />
                             : <p className="text-2xl sm:text-3xl font-bold text-primary">
-                                {data?.avgHoursPerDay ?? 0}h
+                                {data ? formatHoursToTime(data.avgHoursPerDay) : '0m'}
                             </p>
                         }
                         <p className="text-xs sm:text-sm text-gray-600 mt-1">Daily average</p>
@@ -281,7 +282,7 @@ export function AnalyticsPage() {
                                                             className="bg-blue-500 flex items-center justify-center text-white text-xs font-medium transition-all duration-500"
                                                             style={{ width: `${videoPercent}%` }}
                                                         >
-                                                            {day.videoHours > 0.3 && `${day.videoHours}h`}
+                                                            {day.videoHours > 0.1 && formatHoursToTime(day.videoHours)}
                                                         </div>
                                                     )}
                                                     {day.quizHours > 0 && (
@@ -289,7 +290,7 @@ export function AnalyticsPage() {
                                                             className="bg-purple-500 flex items-center justify-center text-white text-xs font-medium transition-all duration-500"
                                                             style={{ width: `${quizPercent}%` }}
                                                         >
-                                                            {day.quizHours > 0.3 && `${day.quizHours}h`}
+                                                            {day.quizHours > 0.1 && formatHoursToTime(day.quizHours)}
                                                         </div>
                                                     )}
                                                     {day.total === 0 && (
@@ -299,8 +300,8 @@ export function AnalyticsPage() {
                                                     )}
                                                 </div>
                                             </div>
-                                            <span className="text-xs sm:text-sm font-semibold text-gray-900 w-10 sm:w-14 text-right shrink-0">
-                                                {day.total}h
+                                            <span className="text-xs sm:text-sm font-semibold text-gray-900 w-[60px] sm:w-[72px] text-right shrink-0">
+                                                {formatHoursToTime(day.total)}
                                             </span>
                                         </div>
                                     </div>
@@ -316,13 +317,13 @@ export function AnalyticsPage() {
                         <div className="flex items-center gap-2">
                             <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-500 rounded" />
                             <span className="text-xs sm:text-sm text-gray-600">
-                                Video/Lessons ({data ? data.weeklyActivity.reduce((s, d) => s + d.videoHours, 0).toFixed(1) : 0}h)
+                                Video/Lessons ({data ? formatHoursToTime(data.weeklyActivity.reduce((s, d) => s + d.videoHours, 0)) : '0m'})
                             </span>
                         </div>
                         <div className="flex items-center gap-2">
                             <div className="w-3 h-3 sm:w-4 sm:h-4 bg-purple-500 rounded" />
                             <span className="text-xs sm:text-sm text-gray-600">
-                                Quizzes ({data ? data.weeklyActivity.reduce((s, d) => s + d.quizHours, 0).toFixed(1) : 0}h)
+                                Quizzes ({data ? formatHoursToTime(data.weeklyActivity.reduce((s, d) => s + d.quizHours, 0)) : '0m'})
                             </span>
                         </div>
                     </div>
@@ -504,7 +505,7 @@ export function AnalyticsPage() {
                                     <>
                                         <li className="flex items-start gap-2">
                                             <span className="text-amber-200">•</span>
-                                            <span>Try to study at least {Math.max(1, 2 - data.avgHoursPerDay).toFixed(1)}h more per day</span>
+                                            <span>Try to study at least {data && (2 - data.avgHoursPerDay) > 0 ? formatHoursToTime(2 - data.avgHoursPerDay) : '2h'} more per day</span>
                                         </li>
                                         <li className="flex items-start gap-2">
                                             <span className="text-amber-200">•</span>

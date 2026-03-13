@@ -128,5 +128,56 @@ export const quizService = {
 
         if (error) throw error;
         return data;
+    },
+
+    async awardQuizXp(studentId: string, amount: number) {
+        const { data: studentData } = await supabase
+            .from('students')
+            .select('user_id, xp')
+            .eq('id', studentId)
+            .single();
+
+        if (studentData?.user_id) {
+            const getLevelFromXp = (xp: number) => {
+                if (xp >= 150) return 'Advanced' as const;
+                if (xp >= 50) return 'Intermediate' as const;
+                return 'Beginner' as const;
+            };
+
+            const { error: rpcError } = await supabase.rpc('increment_xp', {
+                user_id: studentData.user_id,
+                amount: amount
+            });
+
+            if (rpcError) {
+                const newXp = (studentData.xp ?? 0) + amount;
+                await supabase
+                    .from('students')
+                    .update({ xp: newXp, level: getLevelFromXp(newXp) })
+                    .eq('id', studentId);
+            } else {
+                const { data: updated } = await supabase
+                    .from('students')
+                    .select('xp')
+                    .eq('id', studentId)
+                    .single();
+                if (updated) {
+                    await supabase
+                        .from('students')
+                        .update({ level: getLevelFromXp(updated.xp) })
+                        .eq('id', studentId);
+                }
+            }
+
+            try {
+                await supabase.from('xp_history').insert({
+                    student_id: studentId,
+                    amount: amount,
+                    reason: 'Quiz Passed'
+                });
+            } catch {
+                // Ignore history insert errors if RLS blocks it temporarily
+            }
+        }
     }
 };

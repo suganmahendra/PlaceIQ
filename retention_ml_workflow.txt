@@ -1,0 +1,141 @@
+# Behavioral Dropout Predictor (Retention ML) Workflow
+# -------------------------------------------------------------------
+# Goal: Predict if a student is at high risk of dropping out/quitting.
+# Outcome: Send automated alerts to the Mentor and "Wake Up" notifications to the Student.
+
+## 1. The Inputs (Features for the ML Model)
+Based on your current Analytics page and Supabase schema, your platform is already collecting real, usable data for this model. These inputs are queried in `src/services/AnalyticsService.ts` directly from your Supabase database.
+
+Here are the EXACT inputs (Features) extracted over a time window (e.g., last 7, 14, or 30 days) to feed into the model:
+
+### A. Engagement Metrics (From `lesson_progress` & `weekly activity`)
+1. `avgHoursPerDay`: Average learning hours per day. A sudden drop implies fading interest.
+2. `totalWeeklyHours`: Total time spent watching videos or taking quizzes.
+3. `daysSinceLastActive`: Calculated from the most recent `last_watched_at` or `attempted_at`. The higher this number, the higher the dropout risk.
+4. `lessonsCompleted`: Number of completed lessons in the given time frame.
+
+### B. Performance Metrics (From `quiz_attempts` & `students`)
+5. `focusScore`: Currently calculated as the percentage of quizzes passed (`quizzesPassed` / `quizzesAttempted`). Declining focus often leads to frustration and quitting.
+6. `distractionScore`: 100 - `focusScore`. High distraction means they might be guessing or not paying attention to videos.
+7. `readinessScore`: Overall score from the `students` table. If this stagnates over weeks, the student is stuck.
+8. `totalXp`: Total XP from `students.xp` (or XP gained in the last week from `xp_history`). Low XP gain = low momentum.
+
+### C. Skill Progression Metrics (From `enrollments`)
+9. `enrolledCourses`: Number of active (non-dropped) courses. Too many might mean overwhelm; too few might mean lack of interest.
+10. `stagnantSkillsCount`: Number of skills under `skillReadiness` with "Weak" status or where `progress_percent` hasn't changed in 14 days.
+
+---
+
+## 2. Model Selection & Architecture
+For this type of tabular classification task (Predicting 1 = Dropout, 0 = Retained), you don't need Deep Learning. Traditional Machine Learning works best, is cheaper, and trains faster.
+
+**Recommended Algorithms:**
+1. **XGBoost (Extreme Gradient Boosting)** - Highly recommended, handles missing data well, extremely accurate for tabular data.
+2. **Random Forest Classifier** - Easy to tune, great for baseline performance, helps rank "Feature Importance" (e.g., tells you if `focusScore` is the biggest reason they quit).
+
+---
+
+## 3. Training the Model (Step-by-Step)
+
+### Step A: Data Extraction & Preprocessing (Python)
+- Export your historical data from Supabase into a CSV or Pandas DataFrame.
+- **Labeling the Data:** You need a target variable (`y`). Define a "Dropout" as any student who hasn't logged an activity in > 14 days. Mark them as `1`. Active students are `0`.
+- Combine their Analytics inputs as columns (`X`).
+
+### Step B: Training the XGBoost Model
+```python
+import pandas as pd
+from xgboost import XGBClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
+# 1. Load data
+df = pd.read_csv('supabase_student_analytics.csv')
+
+# 2. Features (Inputs) and Target (Output)
+X = df[['avgHoursPerDay', 'totalWeeklyHours', 'daysSinceLastActive', 'focusScore', 'totalXp_gained_monthly']]
+y = df['dropped_out'] # 1 or 0
+
+# 3. Train/Test Split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 4. Train Model
+model = XGBClassifier(learning_rate=0.1, max_depth=5, n_estimators=100)
+model.fit(X_train, y_train)
+
+# 5. Evaluate
+predictions = model.predict(X_test)
+print("Accuracy:", accuracy_score(y_test, predictions))
+```
+
+### Step C: Saving the Model
+Once trained accurately (above 85%), save it using Joblib or Pickle.
+```python
+import joblib
+joblib.dump(model, 'retention_model_v1.pkl')
+```
+
+---
+
+## 4. Deployment Pipeline (A to Z)
+
+Since your main project is React/Node (Vite) and Supabase, you need a way to run the Python ML model. 
+
+### Step 1: Build a Microservice API (FastAPI)
+Create a lightweight Python API using **FastAPI** to host your saved model.
+
+```python
+# main.py
+from fastapi import FastAPI
+import joblib
+import numpy as np
+
+app = FastAPI()
+model = joblib.load('retention_model_v1.pkl')
+
+@app.post("/predict_dropout")
+def predict(data: dict):
+    # Extract features matching the model
+    features = np.array([[
+        data['avgHoursPerDay'], 
+        data['totalWeeklyHours'], 
+        data['daysSinceLastActive'], 
+        data['focusScore'], 
+        data['totalXp']
+    ]])
+    
+    # Get probability of dropping out
+    risk_prob = model.predict_proba(features)[0][1] 
+    
+    return {
+        "is_high_risk": bool(risk_prob > 0.70), # Flag if > 70% chance of quitting
+        "risk_probability": round(float(risk_prob) * 100, 2)
+    }
+```
+
+### Step 2: Hosting the Model API
+Deploy your FastAPI codebase to a cloud provider:
+- **Render.com** (Web Service, Python env) - Integrates perfectly with your current infrastructure.
+- **Railway.app** or **Heroku**.
+*(Cost: ~$7 to $15/month for basic ML hosting)*
+
+### Step 3: Triggering Predictions in PlaceIQ
+You don't need to run the model constantly. You can trigger it automatically via a Cron Job or Supabase Edge Function once a day at midnight.
+
+1. Create a Supabase Edge Function (Deno/TypeScript) called `daily-retention-check`.
+2. This function fetches all active students' `AnalyticsService.ts` data.
+3. It sends an HTTP POST request to your Python FastAPI (`/predict_dropout`).
+4. **Action Response:**
+   - If `is_high_risk` == true:
+     - The function inserts a notification into your `notifications` table for the Mentor: *"⚠️ Alert: Student [X] is at 82% risk of dropping out due to declining focus score. Please intervene."*
+     - The function inserts a notification for the Student: *"📉 Notice: Your analytics have dropped this week. Don't lose your streak! Check out these recommended mock quizzes."*
+
+---
+## Summary Checklist for your Video:
+1. Explain the Supabase schema and how `AnalyticsService.ts` currently computes `focusScore`, `avgHoursPerDay`, `totalXP`.
+2. Extract the data into Pandas for model training.
+3. Train an XGBoost Classifier highlighting why these specific features matter to student psychology.
+4. Export model format to `.pkl`.
+5. Deploy a simple Python API via FastAPI.
+6. Trigger the API from the frontend or a Supabase scheduled function.
+7. Show the Mentor UI receiving the real-time AI Dropout Warning!

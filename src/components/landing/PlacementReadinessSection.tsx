@@ -1,4 +1,4 @@
-import { Briefcase, Building2, Target, Award, TrendingUp, Users } from 'lucide-react';
+import { Briefcase, Target, TrendingUp } from 'lucide-react';
 
 export function PlacementReadinessSection() {
     return (
@@ -74,40 +74,7 @@ export function PlacementReadinessSection() {
                     </div>
                 </div>
 
-                {/* Stats Cards */}
-                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-                    <div className="glass-card rounded-2xl p-6 text-center hover:shadow-lg transition-shadow duration-300">
-                        <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center mx-auto mb-3">
-                            <Building2 className="w-6 h-6 text-purple-600" />
-                        </div>
-                        <div className="text-3xl font-bold text-slate-900 mb-1 font-[family-name:var(--font-display)]">500+</div>
-                        <div className="text-sm text-slate-600 font-medium">Partner Companies</div>
-                    </div>
 
-                    <div className="glass-card rounded-2xl p-6 text-center hover:shadow-lg transition-shadow duration-300">
-                        <div className="w-12 h-12 rounded-xl bg-violet-100 flex items-center justify-center mx-auto mb-3">
-                            <Users className="w-6 h-6 text-violet-600" />
-                        </div>
-                        <div className="text-3xl font-bold text-slate-900 mb-1 font-[family-name:var(--font-display)]">10K+</div>
-                        <div className="text-sm text-slate-600 font-medium">Students Placed</div>
-                    </div>
-
-                    <div className="glass-card rounded-2xl p-6 text-center hover:shadow-lg transition-shadow duration-300">
-                        <div className="w-12 h-12 rounded-xl bg-fuchsia-100 flex items-center justify-center mx-auto mb-3">
-                            <Award className="w-6 h-6 text-fuchsia-600" />
-                        </div>
-                        <div className="text-3xl font-bold text-slate-900 mb-1 font-[family-name:var(--font-display)]">95%</div>
-                        <div className="text-sm text-slate-600 font-medium">Success Rate</div>
-                    </div>
-
-                    <div className="glass-card rounded-2xl p-6 text-center hover:shadow-lg transition-shadow duration-300">
-                        <div className="w-12 h-12 rounded-xl bg-pink-100 flex items-center justify-center mx-auto mb-3">
-                            <TrendingUp className="w-6 h-6 text-pink-600" />
-                        </div>
-                        <div className="text-3xl font-bold text-slate-900 mb-1 font-[family-name:var(--font-display)]">₹12L</div>
-                        <div className="text-sm text-slate-600 font-medium">Avg. Package</div>
-                    </div>
-                </div>
             </div>
         </section>
     );

@@ -43,11 +43,10 @@ export function ProfilePage() {
         const requiredFields = [
             p.full_name,
             p.email,
-            p.department_id,
             p.register_number,
             p.bio,
-            p.resume_url,
-            p.avatar_url
+            p.avatar_url,
+            p.current_semester
         ];
         const filledCount = requiredFields.filter(f => f !== null && f !== undefined && f !== '').length;
         const hasSocials = p.social_links && typeof p.social_links === 'object' && Object.keys(p.social_links).some((k: string) => !!(p.social_links as any)[k]) ? 1 : 0;

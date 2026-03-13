@@ -3,12 +3,7 @@ import { motion } from 'framer-motion';
 import { Target, Users, Shield, Rocket, Heart, Zap } from 'lucide-react';
 
 export const AboutPage: React.FC = () => {
-    const stats = [
-        { label: 'Students Helped', value: '50,000+' },
-        { label: 'Mentors Onboard', value: '1,200+' },
-        { label: 'Success Rate', value: '94%' },
-        { label: 'Partner Companies', value: '300+' },
-    ];
+
 
     const values = [
         {
@@ -56,24 +51,7 @@ export const AboutPage: React.FC = () => {
                 </div>
             </section>
 
-            {/* Stats Section */}
-            <section className="container mx-auto px-4 mt-24">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                    {stats.map((stat, index) => (
-                        <motion.div
-                            key={index}
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            whileInView={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: index * 0.1 }}
-                            viewport={{ once: true }}
-                            className="glass-card p-8 text-center rounded-3xl"
-                        >
-                            <h3 className="text-3xl font-bold text-primary mb-2">{stat.value}</h3>
-                            <p className="text-text-secondary font-medium uppercase tracking-wider text-sm">{stat.label}</p>
-                        </motion.div>
-                    ))}
-                </div>
-            </section>
+
 
             {/* Mission Section */}
             <section className="container mx-auto px-4 mt-32">

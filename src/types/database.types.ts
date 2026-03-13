@@ -114,6 +114,7 @@ export interface Database {
                     social_links: Json
                     joined_at: string
                     last_active: string
+                    current_semester: number
                 }
                 Insert: {
                     id?: string
@@ -132,6 +133,7 @@ export interface Database {
                     social_links?: Json
                     joined_at?: string
                     last_active?: string
+                    current_semester?: number
                 }
                 Update: {
                     id?: string
@@ -150,6 +152,7 @@ export interface Database {
                     social_links?: Json
                     joined_at?: string
                     last_active?: string
+                    current_semester?: number
                 }
                 Relationships: [
                     {
