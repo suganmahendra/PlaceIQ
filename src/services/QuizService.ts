@@ -130,7 +130,7 @@ export const quizService = {
         return data;
     },
 
-    async awardQuizXp(studentId: string, amount: number) {
+    async awardQuizXp(studentId: string, amount: number, quizId?: string) {
         const { data: studentData } = await supabase
             .from('students')
             .select('user_id, xp')
@@ -170,10 +170,22 @@ export const quizService = {
             }
 
             try {
+                let reason = 'Quiz Passed';
+                if (quizId) {
+                    const { data: quizData } = await supabase
+                        .from('quizzes')
+                        .select('title')
+                        .eq('id', quizId)
+                        .single();
+                    if (quizData?.title) {
+                        reason = `Quiz Passed: ${quizData.title}`;
+                    }
+                }
+
                 await supabase.from('xp_history').insert({
                     student_id: studentId,
                     amount: amount,
-                    reason: 'Quiz Passed'
+                    reason: reason
                 });
             } catch {
                 // Ignore history insert errors if RLS blocks it temporarily

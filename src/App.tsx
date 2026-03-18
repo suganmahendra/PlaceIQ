@@ -35,6 +35,8 @@ import { CMSDashboard } from './pages/mentor/cms/CMSDashboard';
 import { RoadmapEditor } from './pages/mentor/cms/RoadmapEditor';
 import { PhaseManager } from './pages/mentor/cms/PhaseManager';
 import { StudentManager } from './pages/mentor/cms/StudentManager';
+import { MentorAlertsPage } from './pages/mentor/cms/MentorAlertsPage';
+import { StudentExplorerPage } from './pages/mentor/cms/StudentExplorerPage';
 import { QuizPage } from './pages/student/QuizPage';
 
 function App() {
@@ -100,6 +102,8 @@ function App() {
               <Route path="cms/roadmap/:id" element={<RoadmapEditor />} />
               <Route path="cms/phases/:moduleId" element={<PhaseManager />} />
               <Route path="cms/students" element={<StudentManager />} />
+              <Route path="cms/alerts" element={<MentorAlertsPage />} />
+              <Route path="cms/explorer" element={<StudentExplorerPage />} />
             </Route >
           </Routes >
         </NotificationProvider>

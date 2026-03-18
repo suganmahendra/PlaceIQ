@@ -136,7 +136,7 @@ export function QuizPage() {
             // If passed, give extra XP natively via RPC call or service
             if (isPassed) {
                 // Bonus XP for passing quiz
-                await quizService.awardQuizXp(profile!.id, 20);
+                await quizService.awardQuizXp(profile!.id, 20, quiz.id);
                 toast.success(`You passed with ${percentage}%! (+20 XP)`);
                 await refreshProfile(); // Sync XP
             } else {

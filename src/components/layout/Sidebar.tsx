@@ -17,6 +17,8 @@ import {
     Bell,
     Settings,
     Users,
+    AlertTriangle,
+    Search
 } from 'lucide-react';
 
 const studentLinks = [
@@ -34,6 +36,8 @@ const mentorLinks = [
     { name: 'Dashboard', path: '/mentor/dashboard', icon: LayoutDashboard },
     { name: 'CMS & Roadmaps', path: '/mentor/cms', icon: Settings },
     { name: 'Manage Students', path: '/mentor/cms/students', icon: Users },
+    { name: 'Student Explorer', path: '/mentor/cms/explorer', icon: Search },
+    { name: 'AI Alerts', path: '/mentor/cms/alerts', icon: AlertTriangle },
 ];
 
 interface SidebarProps {

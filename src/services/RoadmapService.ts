@@ -259,10 +259,21 @@ export const roadmapService = {
                     // Log to xp_history — non-blocking
 
                     try {
+                        let reason = 'Lesson Completed';
+                        const { data: lessonData } = await supabase
+                            .from('course_lessons')
+                            .select('title')
+                            .eq('id', lessonId)
+                            .single();
+                        
+                        if (lessonData?.title) {
+                            reason = `Completed: ${lessonData.title}`;
+                        }
+
                         const { error: historyError } = await supabase.from('xp_history').insert({
                             student_id: enrollment.student_id,
                             amount: XP_PER_LESSON,
-                            reason: 'Lesson Completed'
+                            reason: reason
                         });
                         if (historyError) {
                             console.warn('[XP] xp_history log failed (add RLS INSERT policy):', historyError.message);
