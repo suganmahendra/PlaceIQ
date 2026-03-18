@@ -10,7 +10,6 @@ import {
     Lock,
     Award,
     ArrowRight,
-    Chrome,
     Briefcase,
     ShieldCheck,
     Star,

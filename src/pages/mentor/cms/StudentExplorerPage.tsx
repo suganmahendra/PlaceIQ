@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../../lib/supabase';
 import {
-    Search, UserCircle, BookOpen, Clock, Activity, Target,
+    Search, BookOpen, Clock, Activity, Target,
     ChevronLeft, Star, Zap, TrendingUp, AlertTriangle
 } from 'lucide-react';
 import type { AnalyticsData } from '../../../services/AnalyticsService';
@@ -31,29 +31,6 @@ const avatarColor = (name?: string) => {
     ];
     return colors[(name?.charCodeAt(0) ?? 0) % colors.length];
 };
-
-/* ─── Empty State ─────────────────────────────────────────────────────────── */
-function EmptyState({ studentCount }: { studentCount: number }) {
-    return (
-        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-            <div className="w-20 h-20 mb-6 relative">
-                <div className="absolute inset-0 bg-primary/10 rounded-full animate-ping opacity-25" />
-                <div className="absolute inset-2 bg-primary/10 rounded-full flex items-center justify-center">
-                    <UserCircle className="w-8 h-8 text-primary/50" />
-                </div>
-            </div>
-            <h2 className="text-xl font-bold text-gray-900">Select a Student</h2>
-            <p className="text-gray-500 mt-2 max-w-xs text-sm">
-                Pick a student from the list below to view their full performance telemetry and analytics.
-            </p>
-            {studentCount > 0 && (
-                <span className="mt-4 text-xs font-semibold text-primary bg-primary/10 px-3 py-1.5 rounded-full">
-                    {studentCount} students enrolled
-                </span>
-            )}
-        </div>
-    );
-}
 
 /* ─── Student Card (in list) ─────────────────────────────────────────────── */
 function StudentCard({ student, onSelect }: { student: StudentData; onSelect: () => void }) {

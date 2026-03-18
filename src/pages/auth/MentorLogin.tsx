@@ -8,7 +8,6 @@ import {
     Mail,
     Lock,
     ArrowRight,
-    Chrome,
     ShieldCheck,
     Briefcase,
     AlertCircle
