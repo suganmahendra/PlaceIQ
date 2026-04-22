@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash2, Edit2, FileText, Code } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Edit2, FileText, Code, ArrowUp, ArrowDown } from 'lucide-react';
 import { cmsService, type CourseLesson } from '../../../services/cmsService';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
@@ -131,10 +131,40 @@ export function PhaseManager() {
         }
     };
 
+    const handleMoveLesson = async (index: number, direction: 'up' | 'down') => {
+        if (direction === 'up' && index === 0) return;
+        if (direction === 'down' && index === lessons.length - 1) return;
+
+        const newLessons = [...lessons];
+        const targetIndex = direction === 'up' ? index - 1 : index + 1;
+        
+        // Swap their order_index values
+        const order1 = newLessons[index].order_index;
+        const order2 = newLessons[targetIndex].order_index;
+        
+        newLessons[index] = { ...newLessons[index], order_index: order2 };
+        newLessons[targetIndex] = { ...newLessons[targetIndex], order_index: order1 };
+        
+        // Swap elements in array
+        [newLessons[index], newLessons[targetIndex]] = [newLessons[targetIndex], newLessons[index]];
+        
+        setLessons(newLessons);
+
+        try {
+            await Promise.all([
+                cmsService.updateLesson(newLessons[index].id, { order_index: newLessons[index].order_index } as any),
+                cmsService.updateLesson(newLessons[targetIndex].id, { order_index: newLessons[targetIndex].order_index } as any)
+            ]);
+        } catch (error: any) {
+            console.error('Failed to reorder topics:', error);
+            toast.error('Failed to save new order. Please refresh and try again.');
+        }
+    };
+
     if (loading) return <div className="p-8 text-center">Loading Phase Content...</div>;
 
     return (
-        <div className="max-w-4xl mx-auto space-y-6 pb-20 px-2 sm:px-0">
+        <div className="max-w-4xl mx-auto space-y-6 pb-20 px-3 sm:px-4 md:px-6 lg:px-0">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
                 <button
@@ -199,11 +229,27 @@ export function PhaseManager() {
                                 </div>
                             </div>
                         ) : (
-                            <div className="bg-white p-3 sm:p-4 rounded-xl border border-gray-200 hover:border-primary/30 transition-colors flex items-center justify-between gap-2">
-                                <div className="flex items-center gap-3 min-w-0">
+                            <div className="bg-white p-3 sm:p-4 rounded-xl border border-gray-200 hover:border-primary/30 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div className="flex items-center gap-3 min-w-0 flex-1">
                                     <span className="w-7 h-7 rounded-full bg-gray-50 text-gray-600 flex items-center justify-center font-bold text-xs ring-1 ring-gray-100 shrink-0">
                                         {index + 1}
                                     </span>
+                                    
+                                    <div className="flex flex-col shrink-0">
+                                        <button 
+                                            disabled={index === 0} 
+                                            onClick={() => handleMoveLesson(index, 'up')}
+                                            className="p-0.5 text-gray-400 hover:text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed"
+                                            title="Move Up"
+                                        ><ArrowUp className="w-3.5 h-3.5" /></button>
+                                        <button 
+                                            disabled={index === lessons.length - 1} 
+                                            onClick={() => handleMoveLesson(index, 'down')}
+                                            className="p-0.5 text-gray-400 hover:text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed"
+                                            title="Move Down"
+                                        ><ArrowDown className="w-3.5 h-3.5" /></button>
+                                    </div>
+
                                     <div className="min-w-0">
                                         <h4 className="font-bold text-sm sm:text-base text-gray-900 truncate">{lesson.title}</h4>
                                         <div className="flex items-center gap-2 mt-1 flex-wrap">
@@ -223,7 +269,7 @@ export function PhaseManager() {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-1 shrink-0">
+                                <div className="flex items-center gap-1 shrink-0 self-end sm:self-center">
                                     <button onClick={() => startEdit(lesson)} className="p-1.5 rounded-lg text-gray-400 hover:text-primary hover:bg-primary/5 transition-colors">
                                         <Edit2 className="w-4 h-4" />
                                     </button>

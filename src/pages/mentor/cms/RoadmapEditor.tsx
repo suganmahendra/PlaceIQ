@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Layers, BookOpen, Save, Trash2, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Plus, Layers, BookOpen, Save, Trash2, ChevronRight, Edit2, ArrowUp, ArrowDown, Check, X } from 'lucide-react';
 import { cmsService, type Course, type CourseModule } from '../../../services/cmsService';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
@@ -25,6 +25,9 @@ export function RoadmapEditor() {
 
     const [newModuleTitle, setNewModuleTitle] = useState('');
     const [isAddingModule, setIsAddingModule] = useState(false);
+
+    const [editingModuleId, setEditingModuleId] = useState<string | null>(null);
+    const [editModuleTitle, setEditModuleTitle] = useState('');
 
     useEffect(() => {
         if (!isNew && id) loadCourseData(id);
@@ -108,10 +111,59 @@ export function RoadmapEditor() {
         }
     };
 
+    const handleEditModule = (module: CourseModule) => {
+        setEditingModuleId(module.id);
+        setEditModuleTitle(module.title);
+    };
+
+    const handleSaveModuleEdit = async () => {
+        if (!editingModuleId || !editModuleTitle.trim()) return;
+        try {
+            await cmsService.updateModule(editingModuleId, { title: editModuleTitle });
+            setModules(modules.map(m => m.id === editingModuleId ? { ...m, title: editModuleTitle } : m));
+            setEditingModuleId(null);
+            toast.success('Phase updated!');
+        } catch (error: any) {
+            console.error('Failed to update module:', error);
+            toast.error(error?.message || 'Failed to update phase.');
+        }
+    };
+
+    const handleMoveModule = async (index: number, direction: 'up' | 'down') => {
+        if (direction === 'up' && index === 0) return;
+        if (direction === 'down' && index === modules.length - 1) return;
+
+        const newModules = [...modules];
+        const targetIndex = direction === 'up' ? index - 1 : index + 1;
+        
+        // Swap their order_index values
+        const order1 = newModules[index].order_index;
+        const order2 = newModules[targetIndex].order_index;
+        
+        newModules[index] = { ...newModules[index], order_index: order2 };
+        newModules[targetIndex] = { ...newModules[targetIndex], order_index: order1 };
+        
+        // Swap elements in array
+        [newModules[index], newModules[targetIndex]] = [newModules[targetIndex], newModules[index]];
+        
+        setModules(newModules);
+
+        // Update in backend
+        try {
+            await Promise.all([
+                cmsService.updateModule(newModules[index].id, { order_index: newModules[index].order_index }),
+                cmsService.updateModule(newModules[targetIndex].id, { order_index: newModules[targetIndex].order_index })
+            ]);
+        } catch (error: any) {
+            console.error('Failed to reorder modules:', error);
+            toast.error('Failed to save new order to database. Please refresh and try again.');
+        }
+    };
+
     if (loading) return <div className="p-8 text-center">Loading Editor...</div>;
 
     return (
-        <div className="w-full max-w-5xl mx-auto space-y-6 pb-20 px-2 sm:px-0">
+        <div className="w-full max-w-5xl mx-auto space-y-6 pb-20 px-3 sm:px-4 md:px-6 lg:px-0">
 
             {/* ── Header ── */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
@@ -266,14 +318,58 @@ export function RoadmapEditor() {
                                 <div key={module.id} className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
                                     <div className="p-3 sm:p-4 flex items-center justify-between gap-3">
                                         {/* Phase info */}
-                                        <div className="flex items-center gap-3 min-w-0">
+                                        <div className="flex items-center gap-3 min-w-0 flex-1">
                                             <span className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-bold text-sm shrink-0">
                                                 {index + 1}
                                             </span>
-                                            <div className="min-w-0">
-                                                <h3 className="font-semibold text-sm sm:text-base text-gray-900 truncate">{module.title}</h3>
-                                                <p className="text-xs text-gray-400 hidden sm:block">Phase ID: {module.id.slice(0, 8)}...</p>
+                                            
+                                            <div className="flex flex-col shrink-0">
+                                                <button 
+                                                    disabled={index === 0} 
+                                                    onClick={() => handleMoveModule(index, 'up')}
+                                                    className="p-0.5 text-gray-400 hover:text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed"
+                                                    title="Move Up"
+                                                ><ArrowUp className="w-3.5 h-3.5" /></button>
+                                                <button 
+                                                    disabled={index === modules.length - 1} 
+                                                    onClick={() => handleMoveModule(index, 'down')}
+                                                    className="p-0.5 text-gray-400 hover:text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed"
+                                                    title="Move Down"
+                                                ><ArrowDown className="w-3.5 h-3.5" /></button>
                                             </div>
+
+                                            {editingModuleId === module.id ? (
+                                                <div className="flex items-center gap-2 flex-1 mr-4">
+                                                    <input
+                                                        type="text"
+                                                        value={editModuleTitle}
+                                                        onChange={(e) => setEditModuleTitle(e.target.value)}
+                                                        className="flex-1 rounded-md border border-gray-300 py-1.5 px-3 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                                                        autoFocus
+                                                        onKeyDown={(e) => e.key === 'Enter' && handleSaveModuleEdit()}
+                                                    />
+                                                    <button onClick={handleSaveModuleEdit} className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="Save">
+                                                        <Check className="w-4 h-4" />
+                                                    </button>
+                                                    <button onClick={() => setEditingModuleId(null)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Cancel">
+                                                        <X className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <h3 className="font-semibold text-sm sm:text-base text-gray-900 truncate">{module.title}</h3>
+                                                        <button 
+                                                            onClick={() => handleEditModule(module)}
+                                                            className="text-gray-400 hover:text-primary p-1 rounded transition-colors"
+                                                            title="Edit Phase Title"
+                                                        >
+                                                            <Edit2 className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    </div>
+                                                    <p className="text-xs text-gray-400 hidden sm:block">Phase ID: {module.id.slice(0, 8)}...</p>
+                                                </div>
+                                            )}
                                         </div>
 
                                         {/* Actions */}
